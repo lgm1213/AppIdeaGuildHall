@@ -121,10 +121,10 @@ class EncounterParticipant < ApplicationRecord
 
   def heal!(amount)
     cap = case participantable
-          when Character then participantable.health_status&.max_hp || current_hp.to_i
-          when Enemy     then participantable.hit_points.to_i
-          else current_hp.to_i
-          end
+    when Character then participantable.health_status&.max_hp || current_hp.to_i
+    when Enemy     then participantable.hit_points.to_i
+    else current_hp.to_i
+    end
     update!(current_hp: [ (current_hp || 0) + amount, cap ].min, status: :active)
   end
 
