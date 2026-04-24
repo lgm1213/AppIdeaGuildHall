@@ -1,0 +1,343 @@
+<%# locals: (encounter:, current_participant:, participants:, can_act:) %>
+<div id="action-panel" class="mt-6">
+  <% if current_participant %>
+    <% is_pc = current_participant.pc? %>
+    <div class="card overflow-hidden" data-controller="combat-wizard">
+
+      <%# ── Active combatant header ─────────────────────────────────── %>
+      <div class="px-6 py-4 bg-surface-container-high border-b border-outline-variant/10">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-outline mb-1">
+              Round <%= encounter.current_round&.round_number || 1 %> &middot; Active Turn
+            </p>
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-lg <%= is_pc ? 'text-secondary' : 'text-tertiary' %>"
+                    style="font-variation-settings:'FILL' 1">
+                <%= is_pc ? 'shield_person' : 'skull' %>
+              </span>
+              <h2 class="text-xl font-bold text-on-surface"><%= current_participant.display_name %></h2>
+            </div>
+            <div class="flex gap-4 mt-2 text-xs text-outline">
+              <% if current_participant.current_hp %>
+                <span>HP <span class="text-on-surface font-bold"><%= current_participant.current_hp %></span></span>
+              <% end %>
+              <% if current_participant.display_ac %>
+                <span>AC <span class="text-on-surface font-bold"><%= current_participant.display_ac %></span></span>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="flex gap-2 shrink-0 flex-wrap justify-end">
+            <% if can_act %>
+              <%= button_to encounter_turn_path(encounter),
+                    method: :put,
+                    class: "btn-primary px-4 py-2 rounded-lg flex items-center gap-1 text-sm cursor-pointer" do %>
+                <span class="material-symbols-outlined text-sm">skip_next</span>
+                End Turn
+              <% end %>
+            <% end %>
+            <% if Current.membership&.game_master? %>
+              <%= button_to encounter_completion_path(encounter),
+                    method: :post,
+                    data: { turbo_confirm: "End this encounter?" },
+                    class: "btn-secondary px-4 py-2 rounded-lg flex items-center gap-1 text-sm text-outline cursor-pointer" do %>
+                <span class="material-symbols-outlined text-sm">flag</span>
+                End Encounter
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <%# ── Wizard form (active player or GM) / Waiting state (other players) ── %>
+      <% if can_act %>
+      <%= form_with url: encounter_combat_actions_path(encounter), method: :post do %>
+        <%= hidden_field_tag "combat_action[actor_id]",    current_participant.id %>
+        <%= hidden_field_tag "combat_action[action_type]", "attack",
+              data: { combat_wizard_target: "actionTypeField" } %>
+        <%= hidden_field_tag "combat_action[target_id]",   "",
+              data: { combat_wizard_target: "targetIdField" } %>
+        <%= hidden_field_tag "combat_action[attack_roll]", "",
+              data: { combat_wizard_target: "attackRollField" } %>
+        <%= hidden_field_tag "combat_action[hit]",         "",
+              data: { combat_wizard_target: "hitField" } %>
+        <%= hidden_field_tag "combat_action[weapon_name]", "",
+              data: { combat_wizard_target: "weaponNameField" } %>
+
+        <%# ── Step breadcrumb ─────────────────────────────────────── %>
+        <div class="px-6 pt-5 pb-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-outline">
+          <span class="text-primary">Choose Action</span>
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+          <span>Target</span>
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+          <span>Roll</span>
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+          <span>Damage</span>
+        </div>
+
+        <%# ══════════════════════════════════════════════════════════ %>
+        <%# PANEL 1 — Choose Action                                   %>
+        <%# ══════════════════════════════════════════════════════════ %>
+        <div data-combat-wizard-target="panel" class="px-6 py-5 space-y-6">
+          <p class="stat-label">
+            What does <span class="text-on-surface font-bold"><%= current_participant.display_name %></span> do?
+          </p>
+
+          <%# ── Weapons ──────────────────────────────────────────── %>
+          <% weapons = is_pc ? current_participant.weapon_attacks : current_participant.all_attacks %>
+          <% if weapons.any? %>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-outline mb-3">
+                <%= is_pc ? "Equipped Weapons" : "Attacks" %>
+              </p>
+              <div class="flex flex-wrap gap-3">
+                <% weapons.each do |atk| %>
+                  <%= render "campaigns/encounters/attack_button",
+                        atk: atk, icon: "swords", color_class: "text-primary" %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <%# ── Spells (PCs only) ────────────────────────────────── %>
+          <% if is_pc %>
+            <% spells = current_participant.spell_attacks %>
+            <% if spells.any? %>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-outline mb-3">Spells</p>
+                <div class="flex flex-wrap gap-3">
+                  <% spells.each do |atk| %>
+                    <%= render "campaigns/encounters/attack_button",
+                          atk: atk, icon: "auto_awesome", color_class: "text-secondary" %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+
+            <%# ── Abilities ──────────────────────────────────────── %>
+            <% abilities = current_participant.ability_attacks %>
+            <% if abilities.any? %>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-outline mb-3">Abilities</p>
+                <div class="flex flex-wrap gap-3">
+                  <% abilities.each do |atk| %>
+                    <%= render "campaigns/encounters/attack_button",
+                          atk: atk, icon: "bolt", color_class: "text-tertiary" %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+
+          <%# ── Other actions ─────────────────────────────────────── %>
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-outline mb-3">Other Actions</p>
+            <div class="flex flex-wrap gap-2">
+              <% [
+                { type: "attack",   label: "Attack",     attack: true,  icon: "swords" },
+                { type: "spell",    label: "Cast Spell",  attack: true,  icon: "auto_awesome" },
+                { type: "movement", label: "Dash",        attack: false, icon: "sprint" },
+                { type: "ability",  label: "Dodge",       attack: false, icon: "shield" },
+                { type: "ability",  label: "Help",        attack: false, icon: "handshake" },
+                { type: "ability",  label: "Hide",        attack: false, icon: "visibility_off" },
+                { type: "ability",  label: "Ready",       attack: false, icon: "schedule" },
+                { type: "other",    label: "Other",       attack: false, icon: "more_horiz" }
+              ].each do |action| %>
+                <button type="button"
+                        data-type="<%= action[:type] %>"
+                        data-label="<%= action[:label] %>"
+                        data-attack="<%= action[:attack] %>"
+                        data-action="click->combat-wizard#chooseAction"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-outline-variant/30 bg-surface-container hover:border-outline/50 hover:bg-surface-container-high transition-all cursor-pointer text-xs text-on-surface-variant">
+                  <span class="material-symbols-outlined text-[12px]"><%= action[:icon] %></span>
+                  <%= action[:label] %>
+                </button>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <%# ══════════════════════════════════════════════════════════ %>
+        <%# PANEL 2 — Choose Target                                   %>
+        <%# ══════════════════════════════════════════════════════════ %>
+        <div data-combat-wizard-target="panel" class="hidden px-6 py-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="stat-label">Choose Target</p>
+              <p class="text-xs text-outline mt-0.5">
+                <span data-combat-wizard-target="actionLabel" class="text-on-surface-variant font-medium"></span>
+              </p>
+            </div>
+            <button type="button" data-action="click->combat-wizard#back"
+                    class="flex items-center gap-1 text-xs text-outline hover:text-on-surface transition-colors cursor-pointer">
+              <span class="material-symbols-outlined text-sm">arrow_back</span>
+              Back
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <% participants.reject { |p| p.id == current_participant.id }.each do |participant| %>
+              <% faded = !participant.active? %>
+              <button type="button"
+                      data-id="<%= participant.id %>"
+                      data-ac="<%= participant.display_ac || 0 %>"
+                      data-action="click->combat-wizard#chooseTarget"
+                      class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border <%= faded ? 'border-outline-variant/10 opacity-50' : 'border-outline-variant/30 hover:border-primary/50 hover:bg-primary/5' %> bg-surface-container transition-all cursor-pointer text-left">
+                <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-sm <%= participant.pc? ? 'text-secondary' : 'text-tertiary' %>"
+                        style="font-variation-settings:'FILL' 1">
+                    <%= participant.pc? ? 'shield_person' : 'skull' %>
+                  </span>
+                  <div>
+                    <span class="text-sm font-medium text-on-surface"><%= participant.display_name %></span>
+                    <% unless participant.active? %>
+                      <span class="ml-2 text-[10px] font-bold uppercase tracking-wide text-outline">
+                        (<%= participant.status %>)
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+                <div class="flex gap-3 text-xs text-outline shrink-0">
+                  <% if participant.current_hp %>
+                    <span>HP <span class="text-on-surface font-bold"><%= participant.current_hp %></span></span>
+                  <% end %>
+                  <% if participant.display_ac %>
+                    <span>AC <span class="text-on-surface font-bold"><%= participant.display_ac %></span></span>
+                  <% end %>
+                </div>
+              </button>
+            <% end %>
+          </div>
+
+          <button type="button" data-action="click->combat-wizard#skipTarget"
+                  class="text-xs text-outline hover:text-on-surface transition-colors underline underline-offset-2 cursor-pointer">
+            No target / skip
+          </button>
+        </div>
+
+        <%# ══════════════════════════════════════════════════════════ %>
+        <%# PANEL 3 — Roll to Hit (attack rolls only)                 %>
+        <%# ══════════════════════════════════════════════════════════ %>
+        <div data-combat-wizard-target="panel" class="hidden px-6 py-5 space-y-5">
+          <div class="flex items-center justify-between">
+            <p class="stat-label">Roll to Hit</p>
+            <button type="button" data-action="click->combat-wizard#back"
+                    class="flex items-center gap-1 text-xs text-outline hover:text-on-surface transition-colors cursor-pointer">
+              <span class="material-symbols-outlined text-sm">arrow_back</span>
+              Back
+            </button>
+          </div>
+
+          <div class="bg-surface-container rounded-xl px-4 py-3 text-sm text-on-surface-variant">
+            <span data-combat-wizard-target="actionLabel" class="font-medium text-on-surface"></span>
+            &nbsp;&middot;&nbsp;vs AC
+            <span class="font-bold text-on-surface" data-combat-wizard-target="targetAcDisplay">?</span>
+          </div>
+
+          <div class="space-y-2">
+            <label class="stat-label block">Roll d20</label>
+            <div class="flex items-center gap-3">
+              <input type="number" min="1" max="20" placeholder="1–20"
+                     data-combat-wizard-target="d20Input"
+                     data-action="input->combat-wizard#evaluateRoll"
+                     class="w-28 bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2.5 text-on-surface text-lg font-bold text-center focus:outline-none focus:border-primary transition-all" />
+              <span class="text-sm text-outline">
+                d20 <span data-combat-wizard-target="bonusDisplay" class="text-on-surface font-bold">+0</span>
+              </span>
+            </div>
+          </div>
+
+          <div data-combat-wizard-target="rollSummary" class="hidden space-y-3">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl font-bold text-on-surface" data-combat-wizard-target="rollTotal">—</span>
+              <span class="text-outline text-sm">total</span>
+              <span data-combat-wizard-target="hitBadge"
+                    class="hidden inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-bold uppercase tracking-wide">
+                <span class="material-symbols-outlined text-[12px]" style="font-variation-settings:'FILL' 1">check_circle</span>
+                Hit!
+              </span>
+              <span data-combat-wizard-target="missBadge"
+                    class="hidden inline-flex items-center gap-1 px-3 py-1 rounded-full bg-error/10 border border-error/30 text-error text-xs font-bold uppercase tracking-wide">
+                <span class="material-symbols-outlined text-[12px]">cancel</span>
+                Miss
+              </span>
+            </div>
+            <div class="flex gap-3">
+              <button type="button" data-action="click->combat-wizard#confirmHit"
+                      class="btn-primary px-5 py-2 rounded-lg text-sm cursor-pointer">
+                Confirm Hit → Roll Damage
+              </button>
+              <button type="button" data-action="click->combat-wizard#confirmMiss"
+                      class="btn-secondary px-5 py-2 rounded-lg text-sm text-outline cursor-pointer">
+                Confirm Miss
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <%# ══════════════════════════════════════════════════════════ %>
+        <%# PANEL 4 — Roll Damage / Confirm Action                    %>
+        <%# ══════════════════════════════════════════════════════════ %>
+        <div data-combat-wizard-target="panel" class="hidden px-6 py-5 space-y-5">
+          <div class="flex items-center justify-between">
+            <p class="stat-label">Roll Damage</p>
+            <button type="button" data-action="click->combat-wizard#back"
+                    class="flex items-center gap-1 text-xs text-outline hover:text-on-surface transition-colors cursor-pointer">
+              <span class="material-symbols-outlined text-sm">arrow_back</span>
+              Back
+            </button>
+          </div>
+
+          <%# Save DC badge (shown for save spells / save abilities) %>
+          <div data-combat-wizard-target="saveInfo"
+               class="hidden inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/10 border border-secondary/30 text-secondary text-xs font-bold">
+            <span class="material-symbols-outlined text-[12px]" style="font-variation-settings:'FILL' 1">shield</span>
+          </div>
+
+          <div class="flex items-center gap-2 text-sm text-on-surface-variant">
+            <span class="material-symbols-outlined text-base text-primary">casino</span>
+            <span>Roll&nbsp;<span data-combat-wizard-target="weaponDiceHint" class="font-bold text-on-surface"></span></span>
+          </div>
+
+          <div class="space-y-2">
+            <label class="stat-label block">Damage Dealt</label>
+            <%= number_field_tag "combat_action[damage_dealt]", 0,
+                  min: 0,
+                  data: { combat_wizard_target: "damageDealtField" },
+                  class: "w-36 bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2.5 text-on-surface text-lg font-bold text-center focus:outline-none focus:border-primary transition-all" %>
+          </div>
+
+          <%= submit_tag "Record Action",
+                class: "btn-primary px-6 py-2.5 rounded-lg text-sm cursor-pointer" %>
+        </div>
+
+      <% end %>
+      <% else %>
+        <%# Waiting state — shown to players when it's not their turn %>
+        <div class="px-6 py-8 text-center space-y-3">
+          <span class="material-symbols-outlined text-3xl text-outline" style="font-variation-settings:'FILL' 0">hourglass_top</span>
+          <p class="text-sm font-medium text-on-surface-variant">
+            Waiting for
+            <span class="text-on-surface font-bold"><%= current_participant.display_name %></span>
+            to act&hellip;
+          </p>
+          <p class="text-xs text-outline">The GM or active player will advance the turn.</p>
+        </div>
+      <% end %>
+    </div>
+
+  <% else %>
+    <div id="action-panel" class="card px-6 py-8 text-center">
+      <p class="text-on-surface-variant text-sm">All active combatants have been eliminated.</p>
+      <% if Current.membership&.game_master? %>
+        <%= button_to encounter_completion_path(encounter),
+              method: :post,
+              class: "btn-primary mt-4 px-6 py-2 rounded-lg text-sm cursor-pointer inline-flex items-center gap-1" do %>
+          <span class="material-symbols-outlined text-sm">flag</span>
+          End Encounter
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

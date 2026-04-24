@@ -1,0 +1,48 @@
+<%= content_for :title, "#{@npc.name} — The Chronicler" %>
+
+<div class="flex items-start justify-between mb-8 gap-4">
+  <div>
+    <p class="text-xs text-primary font-bold uppercase tracking-widest mb-1"><%= @campaign.name %></p>
+    <h1 class="font-headline text-4xl font-bold text-on-surface tracking-tight mb-1"><%= @npc.name %></h1>
+    <% if @npc.role.present? %>
+      <span class="stat-label"><%= @npc.role %></span>
+    <% end %>
+  </div>
+
+  <div class="flex gap-3 shrink-0">
+    <%= link_to edit_campaign_npc_path(@campaign, @npc),
+          class: "btn-secondary px-4 py-2 rounded-lg flex items-center gap-1 text-sm" do %>
+      <span class="material-symbols-outlined text-sm">edit</span>
+      Edit
+    <% end %>
+    <%= button_to campaign_npc_path(@campaign, @npc),
+          method: :delete,
+          data: { turbo_confirm: "Remove #{@npc.name}?" },
+          class: "btn-secondary px-4 py-2 rounded-lg flex items-center gap-1 text-sm text-error border-error/30 hover:bg-error/10" do %>
+      <span class="material-symbols-outlined text-sm">delete</span>
+      Delete
+    <% end %>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  <% if @npc.description.present? %>
+    <div class="card p-6">
+      <h2 class="section-header mb-4">
+        <span class="material-symbols-outlined text-sm">person_play</span>
+        Description
+      </h2>
+      <p class="text-sm text-on-surface-variant leading-relaxed"><%= @npc.description %></p>
+    </div>
+  <% end %>
+
+  <% if @npc.notes.present? %>
+    <div class="card p-6">
+      <h2 class="section-header mb-4">
+        <span class="material-symbols-outlined text-sm">lock</span>
+        GM Notes
+      </h2>
+      <p class="text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap"><%= @npc.notes %></p>
+    </div>
+  <% end %>
+</div>

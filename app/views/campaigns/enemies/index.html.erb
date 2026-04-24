@@ -1,0 +1,41 @@
+<%= content_for :title, "Enemies — #{@campaign.name} — The Chronicler" %>
+
+<div class="flex items-center justify-between mb-8">
+  <div>
+    <p class="text-xs text-primary font-bold uppercase tracking-widest mb-1"><%= @campaign.name %></p>
+    <h1 class="font-headline text-4xl font-bold text-on-surface tracking-tight">Enemies</h1>
+  </div>
+  <%= link_to new_campaign_enemy_path(@campaign),
+        class: "btn-primary px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm" do %>
+    <span class="material-symbols-outlined text-sm">add</span>
+    New Enemy
+  <% end %>
+</div>
+
+<% if @enemies.any? %>
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <% @enemies.each do |enemy| %>
+      <%= link_to campaign_enemy_path(@campaign, enemy),
+            class: "card p-5 hover:border-tertiary/30 transition-all group" do %>
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <h3 class="font-bold text-on-surface group-hover:text-tertiary transition-colors"><%= enemy.name %></h3>
+          <% if enemy.challenge_rating.present? %>
+            <span class="stat-label shrink-0">CR <%= enemy.challenge_rating %></span>
+          <% end %>
+        </div>
+        <% if enemy.enemy_type.present? %>
+          <p class="text-xs text-on-surface-variant capitalize"><%= enemy.enemy_type %></p>
+        <% end %>
+        <% if enemy.description.present? %>
+          <p class="text-xs text-on-surface-variant/70 mt-2 line-clamp-2"><%= enemy.description %></p>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="card p-12 text-center">
+    <span class="material-symbols-outlined text-4xl text-tertiary/40 mb-3">skull</span>
+    <p class="text-on-surface-variant">No enemies yet. Add one to populate your bestiary.</p>
+    <%= link_to "Add Enemy", new_campaign_enemy_path(@campaign), class: "btn-primary px-6 py-2.5 rounded-lg inline-block mt-4 text-sm" %>
+  </div>
+<% end %>

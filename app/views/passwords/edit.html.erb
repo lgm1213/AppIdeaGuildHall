@@ -1,0 +1,35 @@
+<%= content_for :title, "Set New Password — The Chronicler" %>
+
+<div class="w-full max-w-md">
+  <div class="text-center mb-10">
+    <div class="w-16 h-16 rounded-2xl bg-surface-container-highest border border-outline-variant/20 flex items-center justify-center mx-auto mb-6">
+      <span class="material-symbols-outlined text-primary text-3xl">lock</span>
+    </div>
+    <h1 class="font-headline text-3xl font-bold text-on-surface tracking-tight mb-2">Set New Password</h1>
+    <p class="text-on-surface-variant text-sm">Choose a strong password for your account</p>
+  </div>
+
+  <div class="bg-surface-container-low border border-outline-variant/15 rounded-xl p-8 shadow-2xl">
+    <%= form_with url: password_path(params[:token]), method: :patch, class: "space-y-5" do |f| %>
+      <div>
+        <label class="stat-label block mb-2">New Password</label>
+        <%= f.password_field :password,
+              class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all",
+              placeholder: "8+ characters",
+              autocomplete: "new-password",
+              autofocus: true %>
+      </div>
+
+      <div>
+        <label class="stat-label block mb-2">Confirm New Password</label>
+        <%= f.password_field :password_confirmation,
+              class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all",
+              placeholder: "••••••••",
+              autocomplete: "new-password" %>
+      </div>
+
+      <%= f.submit "Update Password",
+            class: "btn-primary w-full py-3 rounded-lg cursor-pointer" %>
+    <% end %>
+  </div>
+</div>

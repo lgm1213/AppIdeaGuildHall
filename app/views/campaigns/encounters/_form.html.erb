@@ -1,0 +1,44 @@
+<%# locals: (encounter:, campaign:, game_session:) %>
+<div class="bg-surface-container-low border border-outline-variant/10 rounded-xl p-8">
+  <%= form_with model: encounter.persisted? ? encounter : [campaign, game_session, encounter],
+        class: "space-y-6" do |f| %>
+    <% if encounter.errors.any? %>
+      <div class="bg-error-container border border-error/30 text-on-error-container rounded-lg p-4 text-sm">
+        <span class="material-symbols-outlined text-sm align-middle mr-1">warning</span>
+        <%= encounter.errors.full_messages.first %>
+      </div>
+    <% end %>
+
+    <div>
+      <label class="stat-label block mb-2">Encounter Name</label>
+      <%= f.text_field :name,
+            class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all",
+            placeholder: "e.g. Goblin Ambush, Dragon's Lair",
+            autofocus: true %>
+    </div>
+
+    <div>
+      <label class="stat-label block mb-2">Status</label>
+      <%= f.select :status,
+            Encounter.statuses.keys.map { |s| [ s.humanize, s ] },
+            {},
+            class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" %>
+    </div>
+
+    <div>
+      <label class="stat-label block mb-2">Description <span class="text-outline normal-case font-normal">(optional)</span></label>
+      <%= f.text_area :description,
+            rows: 4,
+            class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none",
+            placeholder: "Scene description, GM notes…" %>
+    </div>
+
+    <div class="flex gap-4 pt-2">
+      <%= f.submit encounter.persisted? ? "Save Changes" : "Create Encounter",
+            class: "btn-primary px-8 py-3 rounded-lg cursor-pointer" %>
+      <%= link_to "Cancel",
+            encounter.persisted? ? encounter_path(encounter) : campaign_game_session_path(campaign, game_session),
+            class: "btn-secondary px-8 py-3 rounded-lg" %>
+    </div>
+  <% end %>
+</div>

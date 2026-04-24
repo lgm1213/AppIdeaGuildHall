@@ -1,0 +1,39 @@
+<%= content_for :title, "NPCs — #{@campaign.name} — The Chronicler" %>
+
+<div class="flex items-center justify-between mb-8">
+  <div>
+    <p class="text-xs text-primary font-bold uppercase tracking-widest mb-1"><%= @campaign.name %></p>
+    <h1 class="font-headline text-4xl font-bold text-on-surface tracking-tight">NPCs</h1>
+  </div>
+  <%= link_to new_campaign_npc_path(@campaign),
+        class: "btn-primary px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm" do %>
+    <span class="material-symbols-outlined text-sm">add</span>
+    New NPC
+  <% end %>
+</div>
+
+<% if @npcs.any? %>
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <% @npcs.each do |npc| %>
+      <%= link_to campaign_npc_path(@campaign, npc),
+            class: "card p-5 hover:border-secondary/30 transition-all group" do %>
+        <div class="flex items-center gap-3 mb-2">
+          <span class="material-symbols-outlined text-secondary">person_play</span>
+          <h3 class="font-bold text-on-surface group-hover:text-secondary transition-colors"><%= npc.name %></h3>
+        </div>
+        <% if npc.role.present? %>
+          <p class="text-xs text-on-surface-variant"><%= npc.role %></p>
+        <% end %>
+        <% if npc.description.present? %>
+          <p class="text-xs text-on-surface-variant/70 mt-2 line-clamp-2"><%= npc.description %></p>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="card p-12 text-center">
+    <span class="material-symbols-outlined text-4xl text-secondary/40 mb-3">person_play</span>
+    <p class="text-on-surface-variant">No NPCs yet. Add one to bring your world to life.</p>
+    <%= link_to "Add NPC", new_campaign_npc_path(@campaign), class: "btn-primary px-6 py-2.5 rounded-lg inline-block mt-4 text-sm" %>
+  </div>
+<% end %>

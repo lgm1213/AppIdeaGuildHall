@@ -1,0 +1,69 @@
+<%= content_for :title, "Invite Players — #{@campaign.name} — The Chronicler" %>
+
+<div class="max-w-lg mx-auto">
+  <div class="mb-8">
+    <p class="text-xs text-primary font-bold uppercase tracking-widest mb-1"><%= @campaign.name %></p>
+    <h1 class="font-headline text-4xl font-bold text-on-surface tracking-tight mb-2">Invite Players</h1>
+    <p class="text-on-surface-variant text-sm">Share the code below with your players. They enter it in the lobby to join.</p>
+  </div>
+
+  <% if @invitation %>
+    <div class="card p-8 text-center space-y-6">
+      <div>
+        <p class="stat-label mb-3">Invite Code</p>
+        <div class="font-headline text-5xl font-bold tracking-[0.25em] text-primary select-all">
+          <%= @invitation.token %>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <button class="btn-secondary px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm"
+                data-controller="copy"
+                data-copy-content-value="<%= @invitation.token %>"
+                data-action="click->copy#copy">
+          <span class="material-symbols-outlined text-sm">content_copy</span>
+          Copy Code
+        </button>
+
+        <%= button_to campaign_invitation_path(@campaign),
+              method: :post,
+              data: { turbo_confirm: "Generate a new code? The old one will stop working." },
+              class: "btn-secondary px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm" do %>
+          <span class="material-symbols-outlined text-sm">refresh</span>
+          Regenerate
+        <% end %>
+
+        <%= button_to campaign_invitation_path(@campaign),
+              method: :delete,
+              data: { turbo_confirm: "Revoke this code? No new players will be able to join." },
+              class: "btn-secondary px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm text-error border-error/30 hover:bg-error/10" do %>
+          <span class="material-symbols-outlined text-sm">block</span>
+          Revoke
+        <% end %>
+      </div>
+
+      <p class="text-xs text-on-surface-variant/60">
+        Generated <%= time_ago_in_words(@invitation.created_at) %> ago
+      </p>
+    </div>
+  <% else %>
+    <div class="card p-12 text-center space-y-4">
+      <span class="material-symbols-outlined text-4xl text-primary/30">link_off</span>
+      <p class="text-on-surface-variant">No active invite code. Generate one to let players join.</p>
+      <%= button_to campaign_invitation_path(@campaign),
+            method: :post,
+            class: "btn-primary px-8 py-3 rounded-lg inline-flex items-center gap-2 text-sm" do %>
+        <span class="material-symbols-outlined text-sm">add_link</span>
+        Generate Invite Code
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="mt-6">
+    <%= link_to campaign_path(@campaign),
+          class: "text-sm text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1" do %>
+      <span class="material-symbols-outlined text-sm">arrow_back</span>
+      Back to Campaign
+    <% end %>
+  </div>
+</div>

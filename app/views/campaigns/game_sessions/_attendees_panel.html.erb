@@ -1,0 +1,50 @@
+<%# locals: (campaign:, game_session:, attendances:, available_memberships:) %>
+<div id="attendees-panel" class="card p-6">
+  <h2 class="section-header mb-4">
+    <span class="material-symbols-outlined text-sm">groups</span>
+    Attendees
+  </h2>
+
+  <% if attendances.any? %>
+    <div class="space-y-2 mb-4">
+      <% attendances.each do |attendance| %>
+        <div class="flex items-center justify-between gap-2 py-1">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="material-symbols-outlined text-sm text-secondary shrink-0">person</span>
+            <span class="text-sm text-on-surface truncate">
+              <%= attendance.user.email_address %>
+            </span>
+          </div>
+          <%= button_to campaign_game_session_session_attendance_path(campaign, game_session, attendance),
+                method: :delete,
+                data: { turbo_confirm: "Remove #{attendance.user.email_address} from this session?" },
+                class: "text-outline hover:text-error transition-colors bg-transparent border-0 cursor-pointer p-0 shrink-0" do %>
+            <span class="material-symbols-outlined text-sm">person_remove</span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-on-surface-variant text-sm mb-4">No attendees yet.</p>
+  <% end %>
+
+  <% if available_memberships.any? %>
+    <div class="border-t border-outline-variant/10 pt-4">
+      <p class="stat-label mb-3">Add Player</p>
+      <div class="space-y-2">
+        <% available_memberships.each do |membership| %>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm text-on-surface-variant truncate"><%= membership.user.email_address %></span>
+            <%= button_to campaign_game_session_session_attendances_path(campaign, game_session),
+                  method: :post,
+                  params: { campaign_membership_id: membership.id },
+                  class: "flex items-center gap-1 text-xs text-primary hover:text-primary/80 bg-transparent border border-primary/30 hover:border-primary/60 rounded px-2 py-1 cursor-pointer transition-colors shrink-0" do %>
+              <span class="material-symbols-outlined text-xs">person_add</span>
+              Add
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,205 @@
+<%= content_for :title, "Inventory & Spells — #{@character.name} — The Chronicler" %>
+
+<%# ── Page header ─────────────────────────────────────────────────────────── %>
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+  <div>
+    <h1 class="font-headline text-4xl font-bold text-on-surface tracking-wide mb-2">Inventory &amp; Magic</h1>
+    <div class="flex items-center gap-3 flex-wrap">
+      <% @character.character_classes.each do |cls| %>
+        <span class="font-label uppercase text-[10px] tracking-widest text-primary border border-primary/30 px-2 py-0.5 rounded">
+          Level <%= cls.level %> <%= cls.name %>
+        </span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-0 bg-surface-container-low rounded-xl border border-outline-variant/15 overflow-hidden divide-x divide-outline-variant/15">
+    <div class="text-center px-5 py-4">
+      <p class="stat-label mb-1">Encumbrance</p>
+      <p class="font-headline text-lg font-bold text-on-surface">
+        <%= @total_weight.round(1) %> <span class="text-[10px] font-normal text-on-surface-variant">lbs</span>
+      </p>
+    </div>
+    <div class="text-center px-5 py-4">
+      <p class="stat-label mb-1">Equipped</p>
+      <p class="font-headline text-lg font-bold text-primary"><%= @equipped_items.count %></p>
+    </div>
+    <div class="text-center px-5 py-4">
+      <p class="stat-label mb-1">Spells Known</p>
+      <p class="font-headline text-lg font-bold text-secondary"><%= @spells_count %></p>
+    </div>
+    <div class="text-center px-5 py-4">
+      <p class="stat-label mb-1">Feats</p>
+      <p class="font-headline text-lg font-bold text-on-surface"><%= @feats.count %></p>
+    </div>
+  </div>
+</div>
+
+<%# ── Tabs wrapper (controller must contain both nav and panels) ──────────── %>
+<div data-controller="tabs"
+     data-tabs-active-tab-class="bg-primary text-on-primary shadow-[0_0_20px_rgba(242,202,80,0.15)]"
+     data-tabs-inactive-tab-class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest/50">
+
+  <%# Tab nav %>
+  <div class="flex gap-2 mb-8 border-b border-outline-variant/15 pb-4">
+    <button class="px-6 py-2 font-bold rounded-lg transition-all bg-primary text-on-primary"
+            data-action="click->tabs#show"
+            data-tabs-target="tab"
+            data-tabs-panel-param="equipment">
+      Equipment
+    </button>
+    <button class="px-6 py-2 font-bold rounded-lg transition-all text-on-surface-variant"
+            data-action="click->tabs#show"
+            data-tabs-target="tab"
+            data-tabs-panel-param="spellbook">
+      Spellbook
+    </button>
+    <button class="px-6 py-2 font-bold rounded-lg transition-all text-on-surface-variant"
+            data-action="click->tabs#show"
+            data-tabs-target="tab"
+            data-tabs-panel-param="feats">
+      Traits &amp; Feats
+    </button>
+  </div>
+
+<%# ── Equipment Panel ────────────────────────────────────────────────────── %>
+<div id="panel-equipment" data-tabs-target="panel">
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+
+    <div class="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10 relative overflow-hidden">
+      <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-headline font-bold text-primary tracking-wide">Equipped Gear</h2>
+        <span class="material-symbols-outlined text-outline">shield</span>
+      </div>
+      <div id="equipped-list" class="space-y-3">
+        <%= render @equipped_items, character: @character %>
+        <% if @equipped_items.empty? %>
+          <p class="text-on-surface-variant text-sm text-center py-6">No equipped items.</p>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-headline font-bold text-primary tracking-wide">Backpack</h2>
+        <%= link_to new_character_inventory_item_path(@character),
+              class: "flex items-center gap-1 text-sm text-on-surface-variant hover:text-primary transition-colors font-bold" do %>
+          <span class="material-symbols-outlined text-sm">add</span>
+          Add Item
+        <% end %>
+      </div>
+      <div id="inventory-list" class="space-y-3">
+        <%= render @unequipped_items, character: @character %>
+        <% if @unequipped_items.empty? %>
+          <p class="text-on-surface-variant text-sm text-center py-4">Your backpack is empty.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%# ── Spellbook Panel ─────────────────────────────────────────────────────── %>
+<div id="panel-spellbook" data-tabs-target="panel" class="hidden">
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+
+    <div class="xl:col-span-2 bg-surface-container-low rounded-2xl p-8 border border-outline-variant/10 relative overflow-hidden">
+      <div class="absolute -top-10 -right-10 w-48 h-48 bg-secondary/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="flex items-center justify-between mb-8">
+        <h2 class="text-2xl font-headline font-bold text-secondary tracking-wide">Spellbook</h2>
+        <%= link_to new_character_character_spell_path(@character),
+              class: "flex items-center gap-1 text-sm text-on-surface-variant hover:text-secondary transition-colors font-bold shrink-0" do %>
+          <span class="material-symbols-outlined text-sm">add</span>
+          Add Spell
+        <% end %>
+      </div>
+
+      <div class="space-y-8 custom-scrollbar max-h-[600px] overflow-y-auto pr-2">
+        <% if @cantrips.any? %>
+          <section>
+            <h3 class="stat-label border-b border-outline-variant/20 pb-2 mb-4">Cantrips</h3>
+            <div class="space-y-3"><%= render @cantrips, character: @character %></div>
+          </section>
+        <% end %>
+
+        <% @leveled_spells.each do |level, spells| %>
+          <section>
+            <h3 class="stat-label border-b border-outline-variant/20 pb-2 mb-4">Level <%= level %> Spells</h3>
+            <div class="space-y-3"><%= render spells, character: @character %></div>
+          </section>
+        <% end %>
+
+        <% if @cantrips.empty? && @leveled_spells.empty? %>
+          <p class="text-on-surface-variant text-sm text-center py-8">No spells yet.</p>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10">
+      <h2 class="text-xl font-headline font-bold text-secondary tracking-wide mb-6">Spell Slots</h2>
+      <% if @spell_slots.any? %>
+        <div class="space-y-4">
+          <% @spell_slots.each do |slot| %>
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <span class="stat-label">Level <%= slot.slot_level %></span>
+                <span class="text-xs text-on-surface-variant"><%= slot.remaining %> / <%= slot.total %></span>
+              </div>
+              <div class="flex gap-1.5">
+                <% slot.total.times do |i| %>
+                  <div class="flex-1 h-2.5 rounded-sm <%= i < slot.used ? "bg-outline-variant/20" : "bg-secondary shadow-[0_0_6px_rgba(223,183,255,0.3)]" %>"></div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-on-surface-variant text-sm">No spell slots defined.</p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%# ── Feats & Traits Panel ───────────────────────────────────────────────── %>
+<div id="panel-feats" data-tabs-target="panel" class="hidden">
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+
+    <div class="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-headline font-bold text-primary tracking-wide">Feats</h2>
+        <%= link_to new_character_character_feat_path(@character),
+              class: "flex items-center gap-1 text-sm text-on-surface-variant hover:text-primary transition-colors font-bold" do %>
+          <span class="material-symbols-outlined text-sm">add</span>
+          Add Feat
+        <% end %>
+      </div>
+      <div id="feats-list" class="space-y-6">
+        <% if @feats.empty? %>
+          <p class="text-on-surface-variant text-sm text-center py-6">No features yet.</p>
+        <% else %>
+          <% @feats.group_by(&:feat_type).each do |type, feats_in_group| %>
+            <% sample = CharacterFeat.new(feat_type: type) %>
+            <div>
+              <h3 class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest <%= sample.type_color %> mb-3 pb-2 border-b border-outline-variant/15">
+                <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1"><%= sample.type_icon %></span>
+                <%= sample.type_label %>
+              </h3>
+              <div class="space-y-2">
+                <%= render feats_in_group, character: @character %>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @character.character_sheet&.background_sections.present? %>
+      <div class="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10 space-y-4">
+        <h2 class="text-xl font-headline font-bold text-primary tracking-wide">Character Background</h2>
+        <%= render "background", sheet: @character.character_sheet %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+</div><%# end tabs controller %>

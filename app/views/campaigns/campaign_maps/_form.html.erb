@@ -1,0 +1,58 @@
+<%# locals: (campaign_map:, campaign:) %>
+<div class="bg-surface-container-low border border-outline-variant/10 rounded-xl p-8">
+  <%= form_with model: [ campaign, campaign_map ], class: "space-y-6" do |f| %>
+    <% if campaign_map.errors.any? %>
+      <div class="bg-error-container border border-error/30 text-on-error-container rounded-lg p-4 text-sm">
+        <span class="material-symbols-outlined text-sm align-middle mr-1">warning</span>
+        <%= campaign_map.errors.full_messages.first %>
+      </div>
+    <% end %>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="md:col-span-2">
+        <label class="stat-label block mb-2">Map Name</label>
+        <%= f.text_field :name,
+              class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all",
+              placeholder: "The Forgotten Vale",
+              autofocus: true %>
+      </div>
+
+      <div>
+        <label class="stat-label block mb-2">Type</label>
+        <%= f.select :map_type,
+              CampaignMap.map_types.keys.map { |t| [ t.humanize, t ] },
+              {},
+              class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" %>
+      </div>
+
+      <div>
+        <label class="stat-label block mb-2">Image <span class="text-outline normal-case font-normal">(optional)</span></label>
+        <%= f.file_field :image,
+              accept: "image/*",
+              class: "w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-surface-container-highest file:text-on-surface hover:file:bg-surface-container-high transition-all" %>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="stat-label block mb-2">Description</label>
+        <%= f.text_area :description,
+              rows: 3,
+              class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none" %>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="stat-label block mb-2">GM Notes <span class="text-outline normal-case font-normal">(private)</span></label>
+        <%= f.text_area :notes,
+              rows: 3,
+              class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none" %>
+      </div>
+    </div>
+
+    <div class="flex gap-4 pt-2">
+      <%= f.submit campaign_map.persisted? ? "Save Changes" : "Create Map",
+            class: "btn-primary px-8 py-3 rounded-lg cursor-pointer" %>
+      <%= link_to "Cancel",
+            campaign_map.persisted? ? campaign_campaign_map_path(campaign, campaign_map) : campaign_campaign_maps_path(campaign),
+            class: "btn-secondary px-8 py-3 rounded-lg" %>
+    </div>
+  <% end %>
+</div>

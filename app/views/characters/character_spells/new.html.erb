@@ -1,0 +1,88 @@
+<%= content_for :title, "Add Spell — #{@character.name} — The Chronicler" %>
+
+<div class="max-w-2xl mx-auto">
+  <div class="mb-8">
+    <p class="text-xs text-secondary font-bold uppercase tracking-widest mb-1"><%= @character.name %></p>
+    <h1 class="font-headline text-4xl font-bold text-on-surface tracking-tight mb-2">Add Spell</h1>
+  </div>
+
+  <div class="card p-8">
+    <%= form_with model: [@character, @spell], url: character_character_spells_path(@character) do |f| %>
+      <div class="space-y-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <%= f.label :name, "Spell Name", class: "stat-label mb-2 block" %>
+            <%= f.text_field :name, class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all", placeholder: "e.g. Fireball" %>
+          </div>
+
+          <div>
+            <%= f.label :spell_level, "Level (0 = Cantrip)", class: "stat-label mb-2 block" %>
+            <%= f.number_field :spell_level, min: 0, max: 9, value: 0, class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" %>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <%= f.label :school, "School", class: "stat-label mb-2 block" %>
+            <%= f.select :school,
+                  %w[Abjuration Conjuration Divination Enchantment Evocation Illusion Necromancy Transmutation],
+                  { include_blank: "Select school…" },
+                  class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all" %>
+          </div>
+
+          <div>
+            <%= f.label :spellcasting_class, "Spellcasting Class", class: "stat-label mb-2 block" %>
+            <%= f.text_field :spellcasting_class, class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all", placeholder: "e.g. Wizard" %>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div>
+            <%= f.label :casting_time, "Casting Time", class: "stat-label mb-2 block" %>
+            <%= f.text_field :casting_time, class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all", placeholder: "1 action" %>
+          </div>
+
+          <div>
+            <%= f.label :range, "Range", class: "stat-label mb-2 block" %>
+            <%= f.text_field :range, class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all", placeholder: "150 feet" %>
+          </div>
+
+          <div>
+            <%= f.label :duration, "Duration", class: "stat-label mb-2 block" %>
+            <%= f.text_field :duration, class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all", placeholder: "Instantaneous" %>
+          </div>
+        </div>
+
+        <div>
+          <%= f.label :components, "Components", class: "stat-label mb-2 block" %>
+          <%= f.text_field :components, class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all", placeholder: "V, S, M (a tiny ball of bat guano)" %>
+        </div>
+
+        <div>
+          <%= f.label :description, "Description", class: "stat-label mb-2 block" %>
+          <%= f.text_area :description, rows: 5, class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all resize-none", placeholder: "What does this spell do?" %>
+        </div>
+
+        <div class="flex gap-6">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <%= f.check_box :concentration, class: "w-4 h-4 accent-secondary" %>
+            <span class="text-sm text-on-surface-variant">Concentration</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <%= f.check_box :ritual, class: "w-4 h-4 accent-secondary" %>
+            <span class="text-sm text-on-surface-variant">Ritual</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <%= f.check_box :prepared, class: "w-4 h-4 accent-secondary" %>
+            <span class="text-sm text-on-surface-variant">Prepared</span>
+          </label>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <%= f.submit "Add Spell", class: "btn-primary px-8 py-2.5 rounded-lg cursor-pointer" %>
+          <%= link_to "Cancel", character_inventory_items_path(@character), class: "btn-secondary px-6 py-2.5 rounded-lg" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

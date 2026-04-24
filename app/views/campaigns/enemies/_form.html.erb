@@ -1,0 +1,249 @@
+<%# locals: (enemy:, campaign:) %>
+<div class="bg-surface-container-low border border-outline-variant/10 rounded-xl p-8">
+  <%= form_with model: [ campaign, enemy ], class: "space-y-8" do |f| %>
+    <% if enemy.errors.any? %>
+      <div class="bg-error-container border border-error/30 text-on-error-container rounded-lg p-4 text-sm">
+        <span class="material-symbols-outlined text-sm align-middle mr-1">warning</span>
+        <%= enemy.errors.full_messages.first %>
+      </div>
+    <% end %>
+
+    <%# ── Identity ──────────────────────────────────────────────────── %>
+    <div>
+      <p class="stat-label mb-3">Identity</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-3">
+          <%= f.text_field :name,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all",
+                placeholder: "Giant Owl",
+                autofocus: true %>
+        </div>
+        <%= f.text_field :size,
+              class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all",
+              placeholder: "Size (Large, Medium…)" %>
+        <%= f.text_field :enemy_type,
+              class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all",
+              placeholder: "Type (Celestial, Beast…)" %>
+        <%= f.text_field :alignment,
+              class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all",
+              placeholder: "Alignment (Neutral…)" %>
+      </div>
+    </div>
+
+    <%# ── Combat Stats ───────────────────────────────────────────────── %>
+    <div>
+      <p class="stat-label mb-3">Combat</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">AC</label>
+          <%= f.number_field :armor_class, min: 0,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary transition-all",
+                placeholder: "12" %>
+        </div>
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Initiative Bonus</label>
+          <%= f.number_field :initiative_bonus,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary transition-all",
+                placeholder: "+2" %>
+        </div>
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Hit Points</label>
+          <%= f.number_field :hit_points, min: 0,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary transition-all",
+                placeholder: "19" %>
+        </div>
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Hit Dice</label>
+          <%= f.text_field :hit_dice,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary transition-all",
+                placeholder: "3d10 + 3" %>
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Speed</label>
+          <%= f.text_field :speed,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary transition-all",
+                placeholder: "5 ft., Fly 60 ft." %>
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Saving Throws</label>
+          <%= f.text_field :saving_throws,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary transition-all",
+                placeholder: "WIS +4, CON +2" %>
+        </div>
+      </div>
+    </div>
+
+    <%# ── Ability Scores ─────────────────────────────────────────────── %>
+    <div>
+      <p class="stat-label mb-3">Ability Scores</p>
+      <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+        <% Enemy::ABILITIES.each do |ability| %>
+          <div class="text-center">
+            <label class="text-xs text-outline uppercase tracking-widest block mb-1">
+              <%= Enemy::ABILITY_LABELS[ability] %>
+            </label>
+            <%= number_field_tag "enemy[stats][#{ability}]",
+                  enemy.ability_score(ability).nonzero?,
+                  min: 1, max: 30,
+                  class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-2 text-on-surface text-center focus:outline-none focus:border-primary transition-all" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <%# ── Proficiencies & Senses ─────────────────────────────────────── %>
+    <div>
+      <p class="stat-label mb-3">Proficiencies & Senses</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Skills</label>
+          <%= f.text_field :skills_text,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary transition-all",
+                placeholder: "Perception +6, Stealth +6" %>
+        </div>
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Senses</label>
+          <%= f.text_field :senses,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary transition-all",
+                placeholder: "Darkvision 120 ft.; Passive Perception 16" %>
+        </div>
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Damage Resistances</label>
+          <%= f.text_field :damage_resistances,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary transition-all",
+                placeholder: "Necrotic, Radiant" %>
+        </div>
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Damage Immunities</label>
+          <%= f.text_field :damage_immunities,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary transition-all",
+                placeholder: "Poison, Psychic" %>
+        </div>
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Condition Immunities</label>
+          <%= f.text_field :condition_immunities,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary transition-all",
+                placeholder: "Charmed, Frightened" %>
+        </div>
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Languages</label>
+          <%= f.text_field :languages,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary transition-all",
+                placeholder: "Celestial, understands Common" %>
+        </div>
+      </div>
+    </div>
+
+    <%# ── CR / XP / PB ───────────────────────────────────────────────── %>
+    <div>
+      <p class="stat-label mb-3">Challenge</p>
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">CR</label>
+          <%= f.text_field :challenge_rating,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary transition-all",
+                placeholder: "1/4" %>
+        </div>
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">XP</label>
+          <%= f.number_field :xp, min: 0,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary transition-all",
+                placeholder: "50" %>
+        </div>
+        <div>
+          <label class="text-xs text-outline uppercase tracking-widest block mb-1">Proficiency Bonus</label>
+          <%= f.number_field :proficiency_bonus, min: 0,
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary transition-all",
+                placeholder: "2" %>
+        </div>
+      </div>
+    </div>
+
+    <%# ── Traits ─────────────────────────────────────────────────────── %>
+    <div data-controller="entry-list" data-entry-list-prefix-value="enemy[traits]">
+      <div class="flex items-center justify-between mb-3">
+        <p class="stat-label">Traits</p>
+        <button type="button" data-action="click->entry-list#add"
+                class="text-xs text-primary hover:text-primary/80 font-bold uppercase tracking-widest transition-colors">
+          + Add Trait
+        </button>
+      </div>
+      <div data-entry-list-target="container" class="space-y-3">
+        <% (enemy.traits.presence || [""]).each do |trait| %>
+          <div data-entry-list-target="entry" class="flex gap-2">
+            <textarea name="enemy[traits][]" rows="3"
+                      class="flex-1 bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none text-sm"
+                      placeholder="Flyby. The owl doesn't provoke an Opportunity Attack when it flies out of an enemy's reach."><%= trait %></textarea>
+            <button type="button" data-action="click->entry-list#remove"
+                    class="text-outline hover:text-error transition-colors self-start mt-3 shrink-0">
+              <span class="material-symbols-outlined text-sm">remove_circle</span>
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <%# ── Actions ────────────────────────────────────────────────────── %>
+    <div data-controller="entry-list" data-entry-list-prefix-value="enemy[actions]">
+      <div class="flex items-center justify-between mb-3">
+        <p class="stat-label">Actions</p>
+        <button type="button" data-action="click->entry-list#add"
+                class="text-xs text-primary hover:text-primary/80 font-bold uppercase tracking-widest transition-colors">
+          + Add Action
+        </button>
+      </div>
+      <div data-entry-list-target="container" class="space-y-3">
+        <% (enemy.actions.presence || [""]).each do |action| %>
+          <div data-entry-list-target="entry" class="flex gap-2">
+            <textarea name="enemy[actions][]" rows="3"
+                      class="flex-1 bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none text-sm"
+                      placeholder="Talons. Melee Attack Roll: +4, reach 5 ft. Hit: 7 (1d10 + 2) Slashing damage."><%= action %></textarea>
+            <button type="button" data-action="click->entry-list#remove"
+                    class="text-outline hover:text-error transition-colors self-start mt-3 shrink-0">
+              <span class="material-symbols-outlined text-sm">remove_circle</span>
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <%# ── Legendary Actions ──────────────────────────────────────────── %>
+    <div data-controller="entry-list" data-entry-list-prefix-value="enemy[legendary_actions]">
+      <div class="flex items-center justify-between mb-3">
+        <p class="stat-label">Legendary Actions <span class="text-outline normal-case font-normal">(optional)</span></p>
+        <button type="button" data-action="click->entry-list#add"
+                class="text-xs text-primary hover:text-primary/80 font-bold uppercase tracking-widest transition-colors">
+          + Add Legendary Action
+        </button>
+      </div>
+      <div data-entry-list-target="container" class="space-y-3">
+        <% (enemy.legendary_actions.presence || []).each do |action| %>
+          <div data-entry-list-target="entry" class="flex gap-2">
+            <textarea name="enemy[legendary_actions][]" rows="2"
+                      class="flex-1 bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none text-sm"
+                      placeholder="Detect. The dragon makes a Wisdom (Perception) check."><%= action %></textarea>
+            <button type="button" data-action="click->entry-list#remove"
+                    class="text-outline hover:text-error transition-colors self-start mt-3 shrink-0">
+              <span class="material-symbols-outlined text-sm">remove_circle</span>
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <%# ── Notes ─────────────────────────────────────────────────────── %>
+    <div>
+      <label class="stat-label block mb-2">GM Notes <span class="text-outline normal-case font-normal">(private)</span></label>
+      <%= f.text_area :notes, rows: 3,
+            class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg py-3 px-4 text-on-surface placeholder-outline focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none" %>
+    </div>
+
+    <div class="flex gap-4 pt-2">
+      <%= f.submit enemy.persisted? ? "Save Changes" : "Create Enemy",
+            class: "btn-primary px-8 py-3 rounded-lg cursor-pointer" %>
+      <%= link_to "Cancel",
+            enemy.persisted? ? campaign_enemy_path(campaign, enemy) : campaign_enemies_path(campaign),
+            class: "btn-secondary px-8 py-3 rounded-lg" %>
+    </div>
+  <% end %>
+</div>

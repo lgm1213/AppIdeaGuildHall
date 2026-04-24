@@ -1,0 +1,37 @@
+<%# locals: (character_feat:, character:) %>
+<div id="<%= dom_id(character_feat) %>"
+     class="p-4 bg-surface-container rounded-lg border border-outline-variant/10 group hover:border-outline-variant/30 transition-all">
+  <div class="flex items-start gap-3">
+    <span class="material-symbols-outlined text-sm mt-0.5 shrink-0 <%= character_feat.type_color %>"
+          style="font-variation-settings:'FILL' 1">
+      <%= character_feat.type_icon %>
+    </span>
+
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 flex-wrap mb-0.5">
+        <h4 class="font-bold text-sm text-on-surface"><%= character_feat.name %></h4>
+        <span class="text-[9px] font-bold uppercase tracking-widest border px-1.5 py-0.5 rounded <%= character_feat.type_badge_classes %>">
+          <%= character_feat.type_label %>
+        </span>
+        <% if character_feat.source.present? %>
+          <span class="text-[10px] text-outline ml-auto shrink-0"><%= character_feat.source %></span>
+        <% end %>
+      </div>
+      <% if character_feat.origin.present? %>
+        <p class="text-[11px] font-medium text-on-surface-variant mb-1">
+          <%= character_feat.origin_label %>: <%= character_feat.origin %>
+        </p>
+      <% end %>
+      <% if character_feat.description.present? %>
+        <p class="text-[11px] text-on-surface-variant leading-relaxed"><%= character_feat.description %></p>
+      <% end %>
+    </div>
+
+    <%= button_to character_character_feat_path(character, character_feat),
+          method: :delete,
+          data: { turbo_confirm: "Remove #{character_feat.name}?" },
+          class: "text-outline hover:text-error transition-colors bg-transparent border-0 cursor-pointer p-0 shrink-0 opacity-0 group-hover:opacity-100 mt-0.5" do %>
+      <span class="material-symbols-outlined text-sm">delete</span>
+    <% end %>
+  </div>
+</div>

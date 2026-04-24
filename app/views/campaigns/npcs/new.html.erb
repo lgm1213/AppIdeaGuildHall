@@ -1,0 +1,10 @@
+<%= content_for :title, "New NPC — #{@campaign.name} — The Chronicler" %>
+
+<div class="max-w-2xl mx-auto">
+  <div class="mb-8">
+    <p class="text-xs text-primary font-bold uppercase tracking-widest mb-1"><%= @campaign.name %></p>
+    <h1 class="font-headline text-4xl font-bold text-on-surface tracking-tight">New NPC</h1>
+  </div>
+
+  <%= render "form", npc: @npc, campaign: @campaign %>
+</div>

@@ -1,0 +1,75 @@
+<%= content_for :title, "Add Feature — #{@character.name} — The Chronicler" %>
+
+<div class="max-w-xl mx-auto">
+  <div class="mb-8">
+    <p class="text-xs text-primary font-bold uppercase tracking-widest mb-1"><%= @character.name %></p>
+    <h1 class="font-headline text-4xl font-bold text-on-surface tracking-tight mb-2">Add Feature</h1>
+  </div>
+
+  <div class="card p-8">
+    <%= form_with model: [@character, @feat],
+          url: character_character_feats_path(@character),
+          data: {
+            controller: "feat-type",
+            feat_type_class_names_value: @class_names.to_json
+          } do |f| %>
+      <div class="space-y-5">
+
+        <%# ── Classification ─────────────────────────────────────────────── %>
+        <div>
+          <%= f.label :feat_type, "Classification", class: "stat-label mb-2 block" %>
+          <div class="grid grid-cols-2 gap-2">
+            <% CharacterFeat.feat_types.each_key do |type| %>
+              <% sample = CharacterFeat.new(feat_type: type) %>
+              <label class="relative flex items-center gap-3 p-3 bg-surface-container border border-outline-variant/20 rounded-lg cursor-pointer hover:border-primary/30 transition-all has-[:checked]:border-primary/50 has-[:checked]:bg-surface-container-high">
+                <%= f.radio_button :feat_type, type,
+                      data: { action: "change->feat-type#typeChanged" },
+                      class: "sr-only" %>
+                <span class="material-symbols-outlined text-sm <%= sample.type_color %>"
+                      style="font-variation-settings:'FILL' 1">
+                  <%= sample.type_icon %>
+                </span>
+                <span class="text-sm font-medium text-on-surface-variant"><%= sample.type_label %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <%# ── Origin (class / race / background) — shown for non-feat types ── %>
+        <div data-feat-type-target="originSection" class="hidden">
+          <label class="stat-label mb-2 block" data-feat-type-target="originLabel">Class</label>
+          <datalist id="feat-origin-list" data-feat-type-target="originList"></datalist>
+          <%= f.text_field :origin,
+                list: "feat-origin-list",
+                data: { feat_type_target: "originInput" },
+                class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all",
+                placeholder: "e.g. Rogue",
+                autocomplete: "off" %>
+        </div>
+
+        <%# ── Name ──────────────────────────────────────────────────────── %>
+        <div>
+          <%= f.label :name, "Name", class: "stat-label mb-2 block" %>
+          <%= f.text_field :name, class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all", placeholder: "e.g. Sneak Attack, Darkvision, War Caster" %>
+        </div>
+
+        <%# ── Source ─────────────────────────────────────────────────────── %>
+        <div>
+          <%= f.label :source, "Source", class: "stat-label mb-2 block" %>
+          <%= f.text_field :source, class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all", placeholder: "e.g. Player's Handbook p. 96" %>
+        </div>
+
+        <%# ── Description ────────────────────────────────────────────────── %>
+        <div>
+          <%= f.label :description, "Description", class: "stat-label mb-2 block" %>
+          <%= f.text_area :description, rows: 4, class: "w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none", placeholder: "What does this do?" %>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <%= f.submit "Add Feature", class: "btn-primary px-8 py-2.5 rounded-lg cursor-pointer" %>
+          <%= link_to "Cancel", character_inventory_items_path(@character), class: "btn-secondary px-6 py-2.5 rounded-lg" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

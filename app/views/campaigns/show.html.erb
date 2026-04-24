@@ -1,0 +1,321 @@
+<%= content_for :title, "#{@campaign.name} — The Chronicler" %>
+
+<% membership = @campaign.campaign_memberships.find_by(user: Current.user) %>
+<% is_gm = membership&.game_master? %>
+
+<div class="max-w-7xl mx-auto">
+  <%# Campaign header %>
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+    <div>
+      <div class="flex items-center gap-3 mb-1">
+        <% if is_gm %>
+          <span class="bg-primary/20 border border-primary/30 text-primary px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase">Game Master</span>
+        <% else %>
+          <span class="bg-secondary/20 border border-secondary/30 text-secondary px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase">Player</span>
+        <% end %>
+        <span class="text-xs text-outline capitalize"><%= @campaign.status %></span>
+      </div>
+      <h1 class="font-headline text-5xl font-bold text-on-surface tracking-tight"><%= @campaign.name %></h1>
+      <p class="text-on-surface-variant mt-2"><%= @campaign.game_system&.name %></p>
+    </div>
+
+    <% if is_gm %>
+      <div class="flex gap-3 shrink-0">
+        <%= link_to edit_campaign_path(@campaign), class: "btn-secondary px-5 py-2.5 rounded-lg flex items-center gap-2" do %>
+          <span class="material-symbols-outlined text-sm">edit</span>
+          Edit Campaign
+        <% end %>
+        <% latest_session = @game_sessions.find(&:planned?) %>
+        <% if latest_session %>
+          <%= link_to campaign_game_session_path(@campaign, latest_session), class: "btn-primary px-5 py-2.5 rounded-lg flex items-center gap-2" do %>
+            <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1">swords</span>
+            Launch Session
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @campaign.description.present? %>
+    <p class="text-on-surface-variant mb-10 max-w-2xl"><%= @campaign.description %></p>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <%# Left: Members & Characters %>
+    <div class="lg:col-span-2 space-y-8">
+      <div class="card p-6">
+        <h2 class="section-header mb-6">
+          <span class="material-symbols-outlined text-sm">groups</span>
+          Party Members
+        </h2>
+
+        <div class="space-y-4">
+          <% @campaign.campaign_memberships.includes(:user, :character).each do |m| %>
+            <div class="flex items-center gap-4 p-4 bg-surface-container rounded-lg border border-outline-variant/10">
+              <div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-on-surface-variant">
+                  <%= m.game_master? ? "gavel" : "person" %>
+                </span>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <p class="font-bold text-on-surface truncate"><%= m.user.email_address %></p>
+                  <% if m.game_master? %>
+                    <span class="text-[10px] text-primary font-bold uppercase tracking-wider shrink-0">GM</span>
+                  <% end %>
+                </div>
+                <% if m.character %>
+                  <p class="text-xs text-on-surface-variant/70 italic">
+                    <%= m.character.name %> — Lvl <%= m.character.total_level %> <%= m.character.race %>
+                  </p>
+                <% end %>
+              </div>
+
+              <% if m.character && (is_gm || m.user_id == Current.user.id) %>
+                <%= link_to character_sheet_path(m.character),
+                      class: "text-on-surface-variant hover:text-primary transition-colors shrink-0" do %>
+                  <span class="material-symbols-outlined text-sm">open_in_new</span>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Chronicle — audit log (GM view) %>
+      <% if is_gm %>
+        <div class="card p-6">
+          <h2 class="section-header mb-6">
+            <span class="material-symbols-outlined text-sm">history</span>
+            Chronicle
+          </h2>
+
+          <% if @events.any? %>
+            <div class="space-y-1">
+              <% @events.each do |event| %>
+                <div class="flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-container transition-colors group">
+                  <div class="w-7 h-7 rounded-full bg-surface-container-highest flex items-center justify-center shrink-0 mt-0.5">
+                    <span class="material-symbols-outlined text-sm <%= event.icon_color %>"
+                          style="font-variation-settings:'FILL' 1">
+                      <%= event.icon %>
+                    </span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-on-surface leading-snug"><%= event.description %></p>
+                    <p class="text-[10px] text-outline mt-0.5"><%= time_ago_in_words(event.created_at) %> ago</p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-on-surface-variant text-sm text-center py-6">No events yet. Activity will appear here as characters level up, take damage, and equip items.</p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%# Sessions — GM sees full management list; players see a read-only list %>
+      <div class="card p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="section-header">
+            <span class="material-symbols-outlined text-sm">calendar_month</span>
+            Sessions
+          </h2>
+          <% if is_gm %>
+            <%= link_to new_campaign_game_session_path(@campaign),
+                  class: "btn-secondary px-4 py-1.5 text-sm rounded-lg flex items-center gap-1" do %>
+              <span class="material-symbols-outlined text-sm">add</span>
+              New Session
+            <% end %>
+          <% end %>
+        </div>
+
+        <% if @game_sessions.any? %>
+          <div class="space-y-3">
+            <% @game_sessions.each do |gs| %>
+              <%# Check if any encounter in this session is active — uses preloaded encounters %>
+              <% has_active_encounter = gs.encounters.any?(&:active?) %>
+              <%= link_to campaign_game_session_path(@campaign, gs),
+                    class: "flex items-center gap-4 p-4 bg-surface-container rounded-lg border border-outline-variant/10 hover:border-primary/30 transition-all #{'border-primary/40' if has_active_encounter}" do %>
+                <div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-sm
+                               <%= has_active_encounter ? 'text-error' : (gs.completed? ? 'text-secondary' : 'text-primary') %>"
+                        style="font-variation-settings:'FILL' 1">
+                    <%= has_active_encounter ? "swords" : (gs.completed? ? "check_circle" : "swords") %>
+                  </span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <p class="font-bold text-on-surface truncate"><%= gs.title.presence || "Session ##{@game_sessions.index(gs) + 1}" %></p>
+                    <% if has_active_encounter %>
+                      <span class="text-[10px] font-bold uppercase tracking-widest text-error border border-error/30 bg-error/10 px-1.5 py-0.5 rounded shrink-0">Live</span>
+                    <% end %>
+                  </div>
+                  <p class="text-xs text-on-surface-variant/70">
+                    <span class="capitalize"><%= gs.status %></span>
+                    <% if gs.session_date %>
+                      &bull; <%= gs.session_date.strftime("%b %-d, %Y") %>
+                    <% end %>
+                  </p>
+                </div>
+                <span class="material-symbols-outlined text-outline text-sm">chevron_right</span>
+              <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-on-surface-variant text-sm text-center py-6">
+            <% if is_gm %>
+              No sessions yet. Create your first session to get started.
+            <% else %>
+              No sessions have been scheduled yet.
+            <% end %>
+          </p>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Right: GM tools & stats %>
+    <div class="space-y-6">
+      <% if is_gm %>
+        <%# Invite code card %>
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="section-header">
+              <span class="material-symbols-outlined text-sm">add_link</span>
+              Invite Code
+            </h2>
+            <% if @invitation %>
+              <%= button_to campaign_invitation_path(@campaign),
+                    method: :delete,
+                    data: { turbo_confirm: "Revoke this code? No new players can join." },
+                    class: "text-outline hover:text-error transition-colors bg-transparent border-0 cursor-pointer p-0" do %>
+                <span class="material-symbols-outlined text-sm">link_off</span>
+              <% end %>
+            <% end %>
+          </div>
+
+          <% if @invitation %>
+            <div class="bg-surface-container rounded-lg px-4 py-3 flex items-center justify-between gap-3 mb-3">
+              <span class="font-headline text-2xl font-bold tracking-[0.2em] text-primary select-all">
+                <%= @invitation.token %>
+              </span>
+              <button class="text-on-surface-variant hover:text-primary transition-colors shrink-0"
+                      data-controller="copy"
+                      data-copy-content-value="<%= @invitation.token %>"
+                      data-action="click->copy#copy"
+                      title="Copy code">
+                <span class="material-symbols-outlined text-sm">content_copy</span>
+              </button>
+            </div>
+            <%= button_to campaign_invitation_path(@campaign),
+                  method: :post,
+                  data: { turbo_confirm: "Generate a new code? The old one stops working immediately." },
+                  class: "text-xs text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1" do %>
+              <span class="material-symbols-outlined text-xs">refresh</span>
+              Regenerate
+            <% end %>
+          <% else %>
+            <p class="text-sm text-on-surface-variant mb-4">No active invite code. Generate one so players can join.</p>
+            <%= button_to campaign_invitation_path(@campaign),
+                  method: :post,
+                  class: "btn-primary w-full py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm" do %>
+              <span class="material-symbols-outlined text-sm">add_link</span>
+              Generate Invite Code
+            <% end %>
+          <% end %>
+        </div>
+
+        <div class="card p-6">
+          <h2 class="section-header mb-4">
+            <span class="material-symbols-outlined text-sm">gavel</span>
+            GM Tools
+          </h2>
+          <nav class="space-y-2">
+            <%= link_to campaign_enemies_path(@campaign),
+                  class: "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-on-surface opacity-80 hover:bg-surface-container-highest/50 hover:opacity-100 hover:translate-x-1 transition-all" do %>
+              <span class="material-symbols-outlined text-tertiary">skull</span>
+              Enemies
+            <% end %>
+            <%= link_to campaign_npcs_path(@campaign),
+                  class: "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-on-surface opacity-80 hover:bg-surface-container-highest/50 hover:opacity-100 hover:translate-x-1 transition-all" do %>
+              <span class="material-symbols-outlined text-secondary">person_play</span>
+              NPCs
+            <% end %>
+            <%= link_to campaign_campaign_maps_path(@campaign),
+                  class: "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-on-surface opacity-80 hover:bg-surface-container-highest/50 hover:opacity-100 hover:translate-x-1 transition-all" do %>
+              <span class="material-symbols-outlined text-primary">map</span>
+              Maps
+            <% end %>
+          </nav>
+        </div>
+
+        <div class="card p-6">
+          <h2 class="section-header mb-4">
+            <span class="material-symbols-outlined text-sm">bar_chart</span>
+            Stats
+          </h2>
+          <dl class="space-y-3 text-sm">
+            <div class="flex justify-between">
+              <dt class="stat-label">Members</dt>
+              <dd class="font-bold text-on-surface"><%= @campaign.campaign_memberships.count %></dd>
+            </div>
+            <div class="flex justify-between">
+              <dt class="stat-label">Sessions</dt>
+              <dd class="font-bold text-on-surface"><%= @campaign.game_sessions.count %></dd>
+            </div>
+            <div class="flex justify-between">
+              <dt class="stat-label">Enemies</dt>
+              <dd class="font-bold text-on-surface"><%= @campaign.enemies.count %></dd>
+            </div>
+          </dl>
+        </div>
+      <% end %>
+
+      <%# Player: character quick-link or creation prompt %>
+      <% if !is_gm && membership && membership.character.nil? %>
+        <div class="card p-6 text-center">
+          <span class="material-symbols-outlined text-4xl text-primary/40 mb-3">person_add</span>
+          <h2 class="font-headline font-bold text-on-surface mb-2">No Character Yet</h2>
+          <p class="text-sm text-on-surface-variant mb-4">Create your character to join the adventure.</p>
+          <%= link_to new_character_path(campaign_id: @campaign.id), class: "btn-primary px-6 py-2.5 rounded-lg inline-flex items-center gap-2 text-sm" do %>
+            <span class="material-symbols-outlined text-sm">add</span>
+            Create Character
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if !is_gm && membership&.character %>
+        <% char = membership.character %>
+        <div class="card p-6">
+          <h2 class="section-header mb-4">
+            <span class="material-symbols-outlined text-sm">person_book</span>
+            Your Character
+          </h2>
+          <div class="flex items-center gap-3 mb-4">
+            <% if char.avatar.attached? %>
+              <%= image_tag char.avatar, class: "w-14 h-14 rounded-full object-cover border-2 border-primary/30" %>
+            <% else %>
+              <div class="w-14 h-14 rounded-full bg-surface-container-highest border-2 border-primary/30 flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary">person</span>
+              </div>
+            <% end %>
+            <div>
+              <p class="font-bold text-primary"><%= char.name %></p>
+              <p class="text-xs text-on-surface-variant/70">Level <%= char.total_level %> <%= char.race %></p>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <%= link_to character_sheet_path(char), class: "btn-primary w-full py-2 rounded-lg flex items-center justify-center gap-2 text-sm" do %>
+              <span class="material-symbols-outlined text-sm">person_book</span>
+              Character Sheet
+            <% end %>
+            <%= link_to character_inventory_items_path(char), class: "btn-secondary w-full py-2 rounded-lg flex items-center justify-center gap-2 text-sm mt-2" do %>
+              <span class="material-symbols-outlined text-sm">auto_stories</span>
+              Inventory &amp; Spells
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,169 @@
+<%= content_for :title, "Edit Stats — #{@character.name} — The Chronicler" %>
+
+<div class="max-w-4xl mx-auto">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <p class="text-xs text-primary font-bold uppercase tracking-widest mb-1"><%= @character.name %></p>
+      <h1 class="font-headline text-4xl font-bold text-on-surface tracking-tight">Edit Stats</h1>
+    </div>
+    <%= link_to character_sheet_path(@character), class: "btn-secondary px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm shrink-0" do %>
+      <span class="material-symbols-outlined text-sm">arrow_back</span>
+      Back to Sheet
+    <% end %>
+  </div>
+
+  <%= form_with model: [@character, @sheet], url: character_sheet_path(@character), method: :patch do |f| %>
+    <div class="space-y-8">
+
+      <%# ── Ability Scores ──────────────────────────────────────────────────── %>
+      <div class="card p-6">
+        <h2 class="section-header mb-6">
+          <span class="material-symbols-outlined text-sm">auto_awesome</span>
+          Ability Scores
+        </h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <% CharacterSheet::STATS.each do |stat| %>
+            <div class="flex flex-col items-center bg-surface-container p-4 rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all">
+              <label class="text-[10px] uppercase font-bold tracking-tighter text-outline mb-2">
+                <%= @sheet.ability_abbreviation(stat) %>
+              </label>
+              <%= number_field_tag "character_sheet[stats][#{stat}]",
+                    @sheet.stat(stat).nonzero? || "",
+                    min: 1, max: 30,
+                    placeholder: "—",
+                    class: "w-full text-center text-2xl font-headline font-bold text-primary bg-surface-container-highest border border-outline-variant/20 rounded-lg py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" %>
+              <p class="text-[10px] text-on-surface-variant mt-2">modifier</p>
+              <p class="text-sm font-bold text-on-surface">
+                <%= @sheet.stat(stat).nonzero? ? @sheet.modifier_string(stat) : "—" %>
+              </p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# ── Combat Stats ────────────────────────────────────────────────────── %>
+      <div class="card p-6">
+        <h2 class="section-header mb-6">
+          <span class="material-symbols-outlined text-sm">shield</span>
+          Combat Stats
+        </h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <%= f.label :armor_class, "Armor Class", class: "stat-label mb-2 block" %>
+            <%= f.number_field :armor_class, min: 0, max: 30,
+                  class: "w-full text-center text-xl font-bold bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" %>
+          </div>
+          <div>
+            <%= f.label :initiative, "Initiative Bonus", class: "stat-label mb-2 block" %>
+            <%= f.number_field :initiative, min: -10, max: 20,
+                  placeholder: "DEX mod",
+                  class: "w-full text-center text-xl font-bold bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" %>
+          </div>
+          <div>
+            <%= f.label :speed, "Speed (ft)", class: "stat-label mb-2 block" %>
+            <%= f.number_field :speed, min: 0, max: 120, value: @sheet.speed.presence || 30,
+                  class: "w-full text-center text-xl font-bold bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" %>
+          </div>
+          <div>
+            <%= f.label :proficiency_bonus, "Proficiency Bonus", class: "stat-label mb-2 block" %>
+            <%= f.number_field :proficiency_bonus, min: 2, max: 6, value: @sheet.effective_proficiency_bonus,
+                  class: "w-full text-center text-xl font-bold bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" %>
+          </div>
+        </div>
+      </div>
+
+      <%# ── Saving Throws ───────────────────────────────────────────────────── %>
+      <div class="card p-6">
+        <h2 class="section-header mb-6">
+          <span class="material-symbols-outlined text-sm">security</span>
+          Saving Throw Proficiencies
+        </h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <% CharacterSheet::STATS.each do |stat| %>
+            <label class="flex items-center gap-3 p-3 bg-surface-container rounded-lg border border-outline-variant/10 hover:border-primary/30 cursor-pointer transition-all group">
+              <%= hidden_field_tag "character_sheet[saving_throw_proficiencies][#{stat}]", "false" %>
+              <%= check_box_tag "character_sheet[saving_throw_proficiencies][#{stat}]",
+                    "true",
+                    @sheet.proficient_in_save?(stat),
+                    class: "w-4 h-4 accent-primary shrink-0" %>
+              <span class="text-sm text-on-surface-variant group-hover:text-on-surface transition-colors">
+                <%= stat.capitalize %>
+              </span>
+            </label>
+          <% end %>
+        </div>
+      </div>
+
+      <%# ── Skills — Proficiency & Bonuses ────────────────────────────────── %>
+      <div class="card p-6">
+        <h2 class="section-header mb-2">
+          <span class="material-symbols-outlined text-sm">military_tech</span>
+          Skills
+        </h2>
+        <p class="text-xs text-on-surface-variant mb-6">Check proficiency to add your proficiency bonus. Use the bonus field for any additional flat modifier (+5, −2, etc.).</p>
+
+        <%# Column headers %>
+        <div class="hidden sm:grid grid-cols-[1.5rem_1fr_3.5rem_3.5rem_3.5rem] gap-x-3 px-3 mb-2">
+          <span></span>
+          <span class="stat-label">Skill</span>
+          <span class="stat-label text-center">Ability</span>
+          <span class="stat-label text-center">Bonus</span>
+          <span class="stat-label text-center">Total</span>
+        </div>
+
+        <div class="space-y-1">
+          <% CharacterSheet::SKILLS.each do |skill, _ability| %>
+            <% prof_bonus   = @sheet.effective_proficiency_bonus %>
+            <% ability_mod  = @sheet.modifier_for(_ability) %>
+            <% flat_bonus   = @sheet.skill_bonus(skill) %>
+            <% is_proficient = @sheet.proficient_in_skill?(skill) %>
+
+            <div class="grid grid-cols-[1.5rem_1fr_3.5rem_3.5rem_3.5rem] gap-x-3 items-center px-3 py-1.5 rounded-lg hover:bg-surface-container transition-colors group"
+                 data-controller="skill-modifier"
+                 data-skill-modifier-ability-mod-value="<%= ability_mod %>"
+                 data-skill-modifier-prof-bonus-value="<%= prof_bonus %>">
+
+              <%# Proficiency checkbox %>
+              <%= hidden_field_tag "character_sheet[skill_proficiencies][#{skill}]", "false" %>
+              <%= check_box_tag "character_sheet[skill_proficiencies][#{skill}]",
+                    "true",
+                    is_proficient,
+                    data: { action: "change->skill-modifier#recalculate", skill_modifier_target: "proficiency" },
+                    class: "w-4 h-4 accent-primary cursor-pointer" %>
+
+              <%# Skill name %>
+              <span class="text-sm text-on-surface-variant group-hover:text-on-surface transition-colors truncate">
+                <%= @sheet.skill_display_name(skill) %>
+              </span>
+
+              <%# Ability abbreviation %>
+              <span class="text-[10px] text-outline uppercase tracking-wider text-center">
+                <%= @sheet.skill_ability_abbr(skill) %>
+              </span>
+
+              <%# Flat bonus input %>
+              <%= number_field_tag "character_sheet[skill_bonuses][#{skill}]",
+                    flat_bonus.nonzero? || "",
+                    placeholder: "0",
+                    data: { action: "input->skill-modifier#recalculate", skill_modifier_target: "bonus" },
+                    class: "w-full text-center text-sm font-bold bg-surface-container border border-outline-variant/20 rounded px-1 py-1 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" %>
+
+              <%# Live total %>
+              <span class="text-sm font-bold text-center <%= is_proficient || flat_bonus.nonzero? ? "text-primary" : "text-on-surface" %>"
+                    data-skill-modifier-target="total">
+                <%= @sheet.skill_modifier_string(skill) %>
+              </span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# ── Submit ──────────────────────────────────────────────────────────── %>
+      <div class="flex gap-4">
+        <%= f.submit "Save Stats", class: "btn-primary px-10 py-3 rounded-lg cursor-pointer text-base font-bold" %>
+        <%= link_to "Cancel", character_sheet_path(@character), class: "btn-secondary px-8 py-3 rounded-lg text-base" %>
+      </div>
+
+    </div>
+  <% end %>
+</div>

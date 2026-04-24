@@ -1,0 +1,93 @@
+<%= content_for :title, "#{@game_session.title} — The Chronicler" %>
+
+<div class="flex items-center justify-between mb-8 gap-4">
+  <div>
+    <p class="text-xs text-primary font-bold uppercase tracking-widest mb-1"><%= @campaign.name %></p>
+    <h1 class="font-headline text-4xl font-bold text-on-surface tracking-tight"><%= @game_session.title %></h1>
+    <div class="flex items-center gap-3 mt-2">
+      <span class="text-xs border rounded px-2 py-0.5 capitalize
+        <%= @game_session.completed? ? 'border-secondary/30 text-secondary' : 'border-primary/30 text-primary' %>">
+        <%= @game_session.status %>
+      </span>
+      <% if @game_session.session_date %>
+        <span class="stat-label"><%= @game_session.session_date.strftime("%B %-d, %Y") %></span>
+      <% end %>
+      <% if @game_session.xp_awarded %>
+        <span class="stat-label"><%= number_with_delimiter(@game_session.xp_awarded) %> XP</span>
+      <% end %>
+    </div>
+  </div>
+
+  <% if Current.membership&.game_master? %>
+    <div class="flex gap-3 shrink-0">
+      <%= link_to edit_campaign_game_session_path(@campaign, @game_session),
+            class: "btn-secondary px-4 py-2 rounded-lg flex items-center gap-1 text-sm" do %>
+        <span class="material-symbols-outlined text-sm">edit</span>
+        Edit
+      <% end %>
+      <%= button_to campaign_game_session_path(@campaign, @game_session),
+            method: :delete,
+            data: { turbo_confirm: "Delete this session?" },
+            class: "btn-secondary px-4 py-2 rounded-lg flex items-center gap-1 text-sm text-error border-error/30 hover:bg-error/10" do %>
+        <span class="material-symbols-outlined text-sm">delete</span>
+        Delete
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <div class="lg:col-span-2 space-y-6">
+    <% if @game_session.notes.present? && Current.membership&.game_master? %>
+      <div class="card p-6">
+        <h2 class="section-header mb-4">
+          <span class="material-symbols-outlined text-sm">notes</span>
+          GM Notes
+        </h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap"><%= @game_session.notes %></p>
+      </div>
+    <% end %>
+
+    <div class="card p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="section-header">
+          <span class="material-symbols-outlined text-sm">swords</span>
+          Encounters
+        </h2>
+        <% if Current.membership&.game_master? %>
+          <%= link_to new_campaign_game_session_encounter_path(@campaign, @game_session),
+                class: "flex items-center gap-1 text-sm text-on-surface-variant hover:text-primary transition-colors font-bold" do %>
+            <span class="material-symbols-outlined text-sm">add</span>
+            Add Encounter
+          <% end %>
+        <% end %>
+      </div>
+
+      <% if @encounters.any? %>
+        <div class="space-y-3">
+          <% @encounters.each do |encounter| %>
+            <%= link_to encounter_path(encounter),
+                  class: "flex items-center gap-4 p-4 bg-surface-container rounded-lg border border-outline-variant/10 hover:border-outline-variant/30 transition-all" do %>
+              <span class="material-symbols-outlined text-primary">swords</span>
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-on-surface text-sm truncate"><%= encounter.name %></p>
+                <p class="text-xs text-on-surface-variant capitalize"><%= encounter.status %></p>
+              </div>
+              <span class="material-symbols-outlined text-outline text-sm">chevron_right</span>
+            <% end %>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-on-surface-variant text-sm text-center py-6">No encounters yet.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <%= render "attendees_panel",
+          campaign:              @campaign,
+          game_session:          @game_session,
+          attendances:           @attendances,
+          available_memberships: @available_memberships %>
+  </div>
+</div>

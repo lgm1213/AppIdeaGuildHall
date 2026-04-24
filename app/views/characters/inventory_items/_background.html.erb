@@ -1,0 +1,7 @@
+<%# locals: (sheet:) %>
+<% sheet.background_sections.each do |section| %>
+  <div>
+    <h4 class="stat-label mb-1"><%= section[:label] %></h4>
+    <p class="text-sm text-on-surface-variant leading-relaxed"><%= section[:value] %></p>
+  </div>
+<% end %>

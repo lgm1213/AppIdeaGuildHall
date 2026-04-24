@@ -1,0 +1,54 @@
+<%= content_for :title, "#{@campaign_map.name} — The Chronicler" %>
+
+<div class="flex items-start justify-between mb-8 gap-4">
+  <div>
+    <p class="text-xs text-primary font-bold uppercase tracking-widest mb-1"><%= @campaign.name %></p>
+    <h1 class="font-headline text-4xl font-bold text-on-surface tracking-tight mb-1"><%= @campaign_map.name %></h1>
+    <span class="stat-label capitalize"><%= @campaign_map.map_type %></span>
+  </div>
+
+  <div class="flex gap-3 shrink-0">
+    <%= link_to edit_campaign_campaign_map_path(@campaign, @campaign_map),
+          class: "btn-secondary px-4 py-2 rounded-lg flex items-center gap-1 text-sm" do %>
+      <span class="material-symbols-outlined text-sm">edit</span>
+      Edit
+    <% end %>
+    <%= button_to campaign_campaign_map_path(@campaign, @campaign_map),
+          method: :delete,
+          data: { turbo_confirm: "Remove #{@campaign_map.name}?" },
+          class: "btn-secondary px-4 py-2 rounded-lg flex items-center gap-1 text-sm text-error border-error/30 hover:bg-error/10" do %>
+      <span class="material-symbols-outlined text-sm">delete</span>
+      Delete
+    <% end %>
+  </div>
+</div>
+
+<div class="space-y-8">
+  <% if @campaign_map.image.attached? %>
+    <div class="card overflow-hidden">
+      <%= image_tag @campaign_map.image, class: "w-full max-h-[600px] object-contain bg-surface-container" %>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <% if @campaign_map.description.present? %>
+      <div class="card p-6">
+        <h2 class="section-header mb-4">
+          <span class="material-symbols-outlined text-sm">map</span>
+          Description
+        </h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed"><%= @campaign_map.description %></p>
+      </div>
+    <% end %>
+
+    <% if @campaign_map.notes.present? %>
+      <div class="card p-6">
+        <h2 class="section-header mb-4">
+          <span class="material-symbols-outlined text-sm">lock</span>
+          GM Notes
+        </h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap"><%= @campaign_map.notes %></p>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,38 @@
+<%# locals: (atk:, icon:, color_class:) %>
+<button type="button"
+        data-name="<%= atk[:name] %>"
+        data-bonus="<%= atk[:bonus] %>"
+        data-dice="<%= atk[:dice] %>"
+        data-kind="<%= atk[:kind] %>"
+        data-is-save="<%= atk[:is_save] %>"
+        data-save-stat="<%= atk[:save_stat] %>"
+        data-action="click->combat-wizard#chooseWeapon"
+        class="group flex flex-col items-start gap-0.5 px-4 py-3 rounded-xl border border-outline-variant/30 bg-surface-container hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer text-left">
+  <div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm <%= color_class %>" style="font-variation-settings:'FILL' 1">
+      <%= icon %>
+    </span>
+    <span class="text-sm font-bold text-on-surface"><%= atk[:name] %></span>
+    <% if atk[:kind] == :spell && atk[:spell_level] %>
+      <% if atk[:spell_level] == 0 %>
+        <span class="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-surface-container-highest text-outline">Cantrip</span>
+      <% else %>
+        <span class="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-secondary/10 text-secondary">Lv <%= atk[:spell_level] %></span>
+      <% end %>
+    <% end %>
+  </div>
+  <div class="flex items-center gap-2 text-xs text-outline mt-0.5">
+    <% if atk[:is_save] %>
+      <span>DC <span class="text-on-surface font-bold"><%= atk[:bonus] %></span></span>
+      <span class="text-outline-variant/60">·</span>
+      <span><%= atk[:save_stat]&.upcase %> save</span>
+    <% else %>
+      <% bonus = atk[:bonus] %>
+      <span><%= bonus >= 0 ? "+#{bonus}" : bonus.to_s %> to hit</span>
+    <% end %>
+    <% if atk[:dice].present? %>
+      <span class="text-outline-variant/60">·</span>
+      <span><%= atk[:dice] %> <%= atk[:damage_type] %></span>
+    <% end %>
+  </div>
+</button>

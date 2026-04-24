@@ -1,0 +1,35 @@
+<%# Standard partial — local: inventory_item (auto), character %>
+<div id="<%= dom_id(inventory_item) %>"
+     class="flex items-center gap-4 bg-surface-container-highest p-3 rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all">
+  <div class="w-12 h-12 bg-surface-container-lowest flex items-center justify-center rounded-lg border <%= inventory_item.equipped? ? "border-primary/20" : "border-outline-variant/10" %> shrink-0">
+    <span class="material-symbols-outlined <%= inventory_item.equipped? ? "text-primary" : "text-on-surface-variant" %>"
+          style="font-variation-settings:'FILL' <%= inventory_item.equipped? ? 1 : 0 %>">
+      <%= inventory_item.icon %>
+    </span>
+  </div>
+
+  <div class="flex-1 min-w-0">
+    <h4 class="font-bold text-on-surface text-sm truncate"><%= inventory_item.name %></h4>
+    <p class="text-[10px] text-on-surface-variant truncate">
+      Qty: <%= inventory_item.quantity %>
+      <% if inventory_item.weight > 0 %>
+        &bull; <%= inventory_item.weight %> lbs
+      <% end %>
+      <% if inventory_item.description.present? %>
+        &bull; <%= inventory_item.description.truncate(40) %>
+      <% end %>
+    </p>
+  </div>
+
+  <div class="flex items-center gap-2 shrink-0">
+    <% if inventory_item.equipped? %>
+      <span class="text-primary font-label text-[9px] uppercase tracking-widest">Equipped</span>
+    <% end %>
+    <%= button_to character_inventory_item_path(character, inventory_item),
+          method: :delete,
+          data: { turbo_confirm: "Remove #{inventory_item.name}?" },
+          class: "text-outline hover:text-error transition-colors bg-transparent border-0 cursor-pointer p-0" do %>
+      <span class="material-symbols-outlined text-sm">delete</span>
+    <% end %>
+  </div>
+</div>

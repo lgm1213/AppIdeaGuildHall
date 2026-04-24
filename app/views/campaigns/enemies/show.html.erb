@@ -1,0 +1,141 @@
+<%= content_for :title, "#{@enemy.name} — The Chronicler" %>
+
+<div class="max-w-2xl mx-auto">
+  <div class="flex items-start justify-between mb-6 gap-4">
+    <div>
+      <p class="text-xs text-primary font-bold uppercase tracking-widest mb-1"><%= @campaign.name %></p>
+      <h1 class="font-headline text-4xl font-bold text-on-surface tracking-tight"><%= @enemy.name %></h1>
+      <p class="text-on-surface-variant text-sm mt-1 italic"><%= @enemy.type_line %></p>
+    </div>
+    <div class="flex gap-2 shrink-0">
+      <%= link_to edit_campaign_enemy_path(@campaign, @enemy),
+            class: "btn-secondary px-4 py-2 rounded-lg flex items-center gap-1 text-sm" do %>
+        <span class="material-symbols-outlined text-sm">edit</span> Edit
+      <% end %>
+      <%= button_to campaign_enemy_path(@campaign, @enemy),
+            method: :delete,
+            data: { turbo_confirm: "Remove #{@enemy.name}?" },
+            class: "btn-secondary px-4 py-2 rounded-lg flex items-center gap-1 text-sm text-error border-error/30 hover:bg-error/10 cursor-pointer" do %>
+        <span class="material-symbols-outlined text-sm">delete</span> Delete
+      <% end %>
+    </div>
+  </div>
+
+  <div class="card overflow-hidden">
+    <%# ── Combat line ────────────────────────────────────────────────── %>
+    <div class="px-6 py-4 bg-surface-container-high border-b border-outline-variant/10 flex flex-wrap gap-6 text-sm">
+      <% if @enemy.armor_class %>
+        <div><span class="stat-label mr-1">AC</span><span class="text-on-surface font-bold"><%= @enemy.armor_class %></span></div>
+      <% end %>
+      <% if @enemy.initiative_bonus %>
+        <div>
+          <span class="stat-label mr-1">Initiative</span>
+          <span class="text-on-surface font-bold">
+            <%= @enemy.initiative_bonus >= 0 ? "+#{@enemy.initiative_bonus}" : @enemy.initiative_bonus %>
+            (<%= 10 + @enemy.initiative_bonus %>)
+          </span>
+        </div>
+      <% end %>
+      <% if @enemy.hit_points %>
+        <div>
+          <span class="stat-label mr-1">HP</span>
+          <span class="text-on-surface font-bold"><%= @enemy.hit_points %></span>
+          <% if @enemy.hit_dice.present? %>
+            <span class="text-outline text-xs ml-1">(<%= @enemy.hit_dice %>)</span>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @enemy.speed.present? %>
+        <div><span class="stat-label mr-1">Speed</span><span class="text-on-surface font-bold"><%= @enemy.speed %></span></div>
+      <% end %>
+    </div>
+
+    <%# ── Ability Scores ─────────────────────────────────────────────── %>
+    <% if Enemy::ABILITIES.any? { |a| @enemy.ability_score(a) > 0 } %>
+      <div class="px-6 py-4 border-b border-outline-variant/10">
+        <div class="grid grid-cols-6 gap-2 text-center">
+          <% Enemy::ABILITIES.each do |ability| %>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-outline mb-1"><%= Enemy::ABILITY_LABELS[ability] %></p>
+              <p class="text-on-surface font-bold text-sm"><%= @enemy.ability_score(ability) %></p>
+              <p class="text-on-surface-variant text-xs"><%= @enemy.modifier_label(ability) %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# ── Proficiency block ──────────────────────────────────────────── %>
+    <% has_proficiency_info = [ @enemy.saving_throws, @enemy.skills_text, @enemy.damage_resistances,
+                                @enemy.damage_immunities, @enemy.condition_immunities,
+                                @enemy.senses, @enemy.languages ].any?(&:present?) %>
+    <% if has_proficiency_info %>
+      <div class="px-6 py-4 border-b border-outline-variant/10 space-y-1 text-sm">
+        <% [
+          [ "Saving Throws",        @enemy.saving_throws ],
+          [ "Skills",               @enemy.skills_text ],
+          [ "Damage Resistances",   @enemy.damage_resistances ],
+          [ "Damage Immunities",    @enemy.damage_immunities ],
+          [ "Condition Immunities", @enemy.condition_immunities ],
+          [ "Senses",               @enemy.senses ],
+          [ "Languages",            @enemy.languages ],
+        ].each do |label, value| %>
+          <% if value.present? %>
+            <p><span class="font-bold text-on-surface"><%= label %></span>
+               <span class="text-on-surface-variant"><%= value %></span></p>
+          <% end %>
+        <% end %>
+        <% if @enemy.cr_line.present? %>
+          <p class="pt-1 font-bold text-on-surface"><%= @enemy.cr_line %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# ── Traits ─────────────────────────────────────────────────────── %>
+    <% active_traits = @enemy.traits.reject(&:blank?) %>
+    <% if active_traits.any? %>
+      <div class="px-6 py-4 border-b border-outline-variant/10 space-y-3">
+        <% active_traits.each do |trait| %>
+          <p class="text-sm text-on-surface-variant leading-relaxed"><%= trait %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# ── Actions ────────────────────────────────────────────────────── %>
+    <% active_actions = Array(@enemy.actions).reject(&:blank?) %>
+    <% if active_actions.any? %>
+      <div class="px-6 py-4 border-b border-outline-variant/10">
+        <p class="stat-label mb-3">Actions</p>
+        <div class="space-y-3">
+          <% active_actions.each do |action| %>
+            <p class="text-sm text-on-surface-variant leading-relaxed"><%= action %></p>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# ── Legendary Actions ──────────────────────────────────────────── %>
+    <% active_legendary = Array(@enemy.legendary_actions).reject(&:blank?) %>
+    <% if active_legendary.any? %>
+      <div class="px-6 py-4 border-b border-outline-variant/10">
+        <p class="stat-label mb-3">Legendary Actions</p>
+        <div class="space-y-3">
+          <% active_legendary.each do |action| %>
+            <p class="text-sm text-on-surface-variant leading-relaxed"><%= action %></p>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# ── GM Notes ───────────────────────────────────────────────────── %>
+    <% if @enemy.notes.present? %>
+      <div class="px-6 py-4">
+        <p class="stat-label mb-2">
+          <span class="material-symbols-outlined text-sm align-middle">lock</span>
+          GM Notes
+        </p>
+        <p class="text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap"><%= @enemy.notes %></p>
+      </div>
+    <% end %>
+  </div>
+</div>

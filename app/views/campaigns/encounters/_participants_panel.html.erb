@@ -1,0 +1,240 @@
+<%# locals: (encounter:, participants:, available_characters:, campaign_enemies:) %>
+<% party    = participants.select { |p| p.participantable_type == "Character" } %>
+<% hostiles = participants.select { |p| p.participantable_type == "Enemy" } %>
+
+<div id="participants-panel">
+
+<% if encounter.active? %>
+  <%# ══ ACTIVE: Battle Order + management sidebar ════════════════════ %>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <%# Battle Order — main column %>
+    <div class="lg:col-span-2 card overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
+        <h2 class="section-header">
+          <span class="material-symbols-outlined text-sm text-primary">format_list_numbered</span>
+          Battle Order
+        </h2>
+        <span class="text-xs text-outline"><%= participants.size %> combatants</span>
+      </div>
+
+      <% if participants.any? %>
+        <div class="divide-y divide-outline-variant/10">
+          <% participants.each do |participant| %>
+            <% is_pc = participant.participantable_type == "Character" %>
+            <% is_current = encounter.active? && participant.initiative_order == encounter.current_turn_order %>
+            <div class="flex items-center gap-4 px-6 py-3 group hover:bg-surface-container/50 transition-colors
+                        <%= participant.active? ? '' : 'opacity-50' %>
+                        <%= is_current ? 'bg-primary/5 border-l-2 border-primary' : '' %>">
+
+              <%# Position badge %>
+              <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0
+                           <%= is_pc ? 'bg-secondary/10 border border-secondary/30 text-secondary' : 'bg-tertiary/10 border border-tertiary/30 text-tertiary' %>">
+                <%= participant.initiative_order %>
+              </span>
+
+              <%# Type icon %>
+              <span class="material-symbols-outlined text-base shrink-0 <%= is_pc ? 'text-secondary' : 'text-tertiary' %>"
+                    style="font-variation-settings:'FILL' 1">
+                <%= is_pc ? 'shield_person' : 'skull' %>
+              </span>
+
+              <%# Name + HP %>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-on-surface truncate"><%= participant.display_name %></p>
+                <% if participant.current_hp %>
+                  <p class="text-xs text-outline">HP <%= participant.current_hp %></p>
+                <% end %>
+              </div>
+
+              <%# Roll %>
+              <% if participant.initiative_roll %>
+                <div class="text-right shrink-0">
+                  <p class="text-lg font-bold text-on-surface leading-none"><%= participant.initiative_roll %></p>
+                  <p class="text-[10px] text-outline uppercase tracking-widest">rolled</p>
+                </div>
+              <% end %>
+
+              <%# Status %>
+              <% unless participant.active? %>
+                <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border
+                             <%= participant.dead? ? 'text-error border-error/30 bg-error/10' : 'text-outline border-outline-variant/30' %>">
+                  <%= participant.status %>
+                </span>
+              <% end %>
+
+              <%# Remove (GM only) %>
+              <% if Current.membership&.game_master? %>
+                <%= button_to participant_path(participant),
+                      method: :delete,
+                      data: { turbo_confirm: "Remove #{participant.display_name} from this encounter?" },
+                      class: "opacity-0 group-hover:opacity-100 text-outline hover:text-error transition-all bg-transparent border-0 cursor-pointer p-0 shrink-0" do %>
+                  <span class="material-symbols-outlined text-sm">close</span>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="px-6 py-8 text-sm text-outline text-center">No participants yet.</p>
+      <% end %>
+    </div>
+
+    <%# Management sidebar (GM only) %>
+    <% if Current.membership&.game_master? %>
+    <div class="space-y-4">
+
+      <%# Add PC %>
+      <% if available_characters.any? %>
+        <div class="card p-4">
+          <p class="stat-label mb-3">
+            <span class="material-symbols-outlined text-sm text-secondary align-middle">person_add</span>
+            Add Character
+          </p>
+          <div class="space-y-2">
+            <% available_characters.each do |character| %>
+              <%= button_to encounter_participants_path(encounter),
+                    method: :post,
+                    params: { participantable_type: "Character", participantable_id: character.id },
+                    class: "w-full flex items-center gap-2 px-3 py-2 bg-surface-container border border-outline-variant/20 hover:border-secondary/40 rounded-lg cursor-pointer transition-all text-left" do %>
+                <span class="material-symbols-outlined text-sm text-secondary">add</span>
+                <span class="text-sm text-on-surface-variant"><%= character.name %></span>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <%# Add Enemy %>
+      <% if campaign_enemies.any? %>
+        <div class="card p-4">
+          <p class="stat-label mb-3">
+            <span class="material-symbols-outlined text-sm text-tertiary align-middle">add_circle</span>
+            Add Enemy
+          </p>
+          <%= form_with url: encounter_participants_path(encounter), method: :post,
+                class: "space-y-2" do |f| %>
+            <%= hidden_field_tag :participantable_type, "Enemy" %>
+            <div class="flex gap-2">
+              <%= f.number_field :quantity, value: 1, min: 1, max: 20,
+                    class: "w-14 bg-surface-container border border-outline-variant/30 rounded-lg px-2 py-2 text-on-surface text-sm text-center focus:outline-none focus:border-primary transition-all" %>
+              <%= f.select :participantable_id,
+                    campaign_enemies.map { |e| [ e.name, e.id ] },
+                    { include_blank: "— enemy —" },
+                    class: "flex-1 bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm focus:outline-none focus:border-primary transition-all" %>
+            </div>
+            <%= f.submit "Add", class: "w-full btn-primary py-2 rounded-lg text-sm cursor-pointer" %>
+          <% end %>
+        </div>
+      <% end %>
+
+    </div>
+    <% end %>
+  </div>
+
+<% else %>
+  <%# ══ PENDING: Add participants ═════════════════════════════════════ %>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <%# Party card %>
+    <div class="card p-6">
+      <h2 class="section-header mb-4">
+        <span class="material-symbols-outlined text-sm text-secondary">shield_person</span>
+        Party
+        <span class="text-xs font-normal text-outline normal-case ml-1">(<%= party.size %>)</span>
+      </h2>
+
+      <% if party.any? %>
+        <div class="space-y-2 mb-4">
+          <% party.each do |participant| %>
+            <div class="flex items-center gap-3 py-1 group">
+              <span class="material-symbols-outlined text-sm text-secondary shrink-0"
+                    style="font-variation-settings:'FILL' 1">person</span>
+              <span class="flex-1 text-sm text-on-surface truncate"><%= participant.display_name %></span>
+              <% if Current.membership&.game_master? %>
+                <%= button_to participant_path(participant),
+                      method: :delete,
+                      data: { turbo_confirm: "Remove #{participant.display_name}?" },
+                      class: "opacity-0 group-hover:opacity-100 text-outline hover:text-error transition-all bg-transparent border-0 cursor-pointer p-0 shrink-0" do %>
+                  <span class="material-symbols-outlined text-sm">person_remove</span>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if Current.membership&.game_master? && available_characters.any? %>
+        <div class="<%= party.any? ? 'border-t border-outline-variant/10 pt-4' : '' %>">
+          <p class="stat-label mb-2">Add from Session</p>
+          <div class="space-y-2">
+            <% available_characters.each do |character| %>
+              <%= button_to encounter_participants_path(encounter),
+                    method: :post,
+                    params: { participantable_type: "Character", participantable_id: character.id },
+                    class: "w-full flex items-center gap-2 px-3 py-2 bg-surface-container border border-outline-variant/20 hover:border-secondary/40 rounded-lg cursor-pointer transition-all" do %>
+                <span class="material-symbols-outlined text-sm text-secondary">add</span>
+                <span class="text-sm text-on-surface-variant"><%= character.name %></span>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% elsif party.empty? %>
+        <p class="text-sm text-outline">No players have been added to this session yet.</p>
+      <% end %>
+    </div>
+
+    <%# Enemies card %>
+    <div class="card p-6">
+      <h2 class="section-header mb-4">
+        <span class="material-symbols-outlined text-sm text-tertiary">skull</span>
+        Enemies
+        <span class="text-xs font-normal text-outline normal-case ml-1">(<%= hostiles.size %>)</span>
+      </h2>
+
+      <% if hostiles.any? %>
+        <div class="space-y-2 mb-4">
+          <% hostiles.each do |participant| %>
+            <div class="flex items-center gap-3 py-1 group">
+              <span class="material-symbols-outlined text-sm text-tertiary shrink-0"
+                    style="font-variation-settings:'FILL' 1">skull</span>
+              <span class="flex-1 text-sm text-on-surface truncate"><%= participant.display_name %></span>
+              <% if Current.membership&.game_master? %>
+                <%= button_to participant_path(participant),
+                      method: :delete,
+                      data: { turbo_confirm: "Remove #{participant.display_name}?" },
+                      class: "opacity-0 group-hover:opacity-100 text-outline hover:text-error transition-all bg-transparent border-0 cursor-pointer p-0 shrink-0" do %>
+                  <span class="material-symbols-outlined text-sm">remove_circle</span>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if Current.membership&.game_master? && campaign_enemies.any? %>
+        <div class="<%= hostiles.any? ? 'border-t border-outline-variant/10 pt-4' : '' %>">
+          <p class="stat-label mb-2">Add Enemy</p>
+          <%= form_with url: encounter_participants_path(encounter), method: :post,
+                class: "flex items-center gap-2" do |f| %>
+            <%= hidden_field_tag :participantable_type, "Enemy" %>
+            <%= f.number_field :quantity, value: 1, min: 1, max: 20,
+                  class: "w-16 bg-surface-container border border-outline-variant/30 rounded-lg px-2 py-2 text-on-surface text-sm text-center focus:outline-none focus:border-primary transition-all" %>
+            <%= f.select :participantable_id,
+                  campaign_enemies.map { |e| [ e.name, e.id ] },
+                  { include_blank: "— pick enemy —" },
+                  class: "flex-1 bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-on-surface text-sm focus:outline-none focus:border-primary transition-all" %>
+            <%= f.submit "Add", class: "btn-primary px-4 py-2 rounded-lg text-sm cursor-pointer shrink-0" %>
+          <% end %>
+        </div>
+      <% else %>
+        <% unless hostiles.any? %>
+          <p class="text-sm text-outline">No enemies in this campaign yet.</p>
+        <% end %>
+      <% end %>
+    </div>
+
+  </div>
+<% end %>
+
+</div>
